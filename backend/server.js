@@ -15,6 +15,7 @@ import errorHandler from './middleware/errorHandler.js';
 import authRoutes from './routes/AuthRoutes.js';
 import userRoutes from './routes/UserRoutes.js';
 import dashboardRoutes from './routes/DashboardRoutes.js';
+import auditoriaRoutes from './routes/AuditoriaRoutes.js';
 
 // ── Configuración ──
 const app = express();
@@ -61,6 +62,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
 
 // ── Ruta no encontrada ──
 app.use((_req, res) => {

@@ -66,6 +66,14 @@ const errorHandler = (err, req, res, _next) => {
         });
     }
 
+    // ── body-parser: JSON malformado ─────────────────────────────────────────────
+    if (err.type === 'entity.parse.failed') {
+        return res.status(400).json({
+            success: false,
+            message: 'El cuerpo de la petición contiene JSON inválido.',
+        });
+    }
+
     // ── 4. Fallback — error no controlado ────────────────────────────────────
     // En producción nunca exponer el mensaje interno al cliente.
     return res.status(500).json({
