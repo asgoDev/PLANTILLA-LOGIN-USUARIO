@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 /**
  * Teléfono venezolano: prefijos fijos (0212, 0261…) o celulares (04XX-XXXXXXX).
@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     },
     fechaNacimiento: {
       type: Date,
-      required: [true, "La fecha de nacimiento es requerida"],
+      // required: [true, "La fecha de nacimiento es requerida"],
     },
 
     // ── Acceso ────────────────────────────────────────────────────────────

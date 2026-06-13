@@ -31,9 +31,9 @@ class AuthService {
         const DUMMY_HASH = '$2b$12$eImiTXuWVxfM37uY4JANjQe5ds4vAMpN8BUDKPqO4yrIbmUxKKiJy';
         const isMatch = user
             ? await user.comparePassword(password)
-            : await import('bcryptjs').then(({ default: bcrypt }) =>
-                  bcrypt.compare(password, DUMMY_HASH)
-              );
+            : await import('bcrypt').then(({ default: bcrypt }) =>
+                bcrypt.compare(password, DUMMY_HASH)
+            );
 
         if (user?.estado === 'inactivo') {
             const err = new AppError(
