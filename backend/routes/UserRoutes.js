@@ -1,16 +1,18 @@
-import { Router } from 'express';
-import userController from '../controllers/UserController.js';
-import { authenticate, authorize } from '../middleware/auth.middleware.js';
+import { Router } from "express";
+import userController from "../controllers/UserController.js";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
+import validate from "../middleware/validate.js";
+import { createUserSchema, updateUserSchema } from "../validations/user.js";
 
 const router = Router();
 
-// Todas las rutas de usuarios requieren autenticación
 router.use(authenticate);
+router.use(authorize("admin"));
 
-router.get('/', authorize('admin'), userController.getUsers);
-router.get('/:id', authorize('admin'), userController.getUserById);
-router.post('/', authorize('admin'), userController.createUser);
-router.put('/:id', authorize('admin'), userController.updateUser);
-router.delete('/:id', authorize('admin'), userController.deleteUser);
+router.get("/", userController.getUsers);
+router.get("/:id", userController.getUserById);
+router.post("/", validate(createUserSchema), userController.createUser);
+router.put("/:id", validate(updateUserSchema), userController.updateUser);
+router.delete("/:id", userController.deleteUser);
 
 export default router;

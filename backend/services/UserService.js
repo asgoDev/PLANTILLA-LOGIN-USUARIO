@@ -1,102 +1,93 @@
-import User from '../models/User.js';
-import { createUserSchema, updateUserSchema } from '../validations/user.js';
+import User from "../models/User.js";
+import AppError from "../errors/AppError.js";
 
 class UserService {
-    /**
-     * Obtiene todos los usuarios paginados y filtrados.
-     */
-    async getUsers({ page = 1, limit = 20, role, estado }) {
-        const filter = {};
+  /**
+   * Obtiene todos los usuarios paginados y filtrados.
+   */
+  async getUsers({ page = 1, limit = 20, role, estado } = {}) {
+    const filter = {};
+    if (role) filter.role = role;
+    if (estado) filter.estado = estado;
 
-        if (role) filter.role = role;
-        if (estado) filter.estado = estado;
+    const skip = (Number(page) - 1) * Number(limit);
 
-        const users = await User.find(filter)
-            .skip((page - 1) * limit)
-            .limit(Number(limit))
-            .sort({ createdAt: -1 })
-            .lean();
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .skip(skip)
+        .limit(Number(limit))
+        .sort({ createdAt: -1 })
+        .lean(),
+      User.countDocuments(filter),
+    ]);
 
-        const total = await User.countDocuments(filter);
+    return {
+      users,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        pages: Math.ceil(total / Number(limit)),
+      },
+    };
+  }
 
-        return {
-            users,
-            pagination: {
-                total,
-                page: Number(page),
-                pages: Math.ceil(total / limit),
-            },
-        };
+  /**
+   * Obtiene un usuario por ID.
+   */
+  async getUserById(id) {
+    const user = await User.findById(id);
+    if (!user)
+      throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
+    return user;
+  }
+
+  /**
+   * Crea un nuevo usuario.
+   * req.body ya viene validado por validate(createUserSchema) en la ruta.
+   */
+  async createUser(data) {
+    return User.create(data);
+  }
+
+  /**
+   * Actualiza un usuario existente.
+   * Siempre usa .save() para garantizar que el pre-save hook de bcrypt
+   * se ejecute si se envía password, sin duplicar lógica condicional.
+   */
+  async updateUser(id, data) {
+    const user = await User.findById(id).select("+password");
+    if (!user)
+      throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
+
+    Object.assign(user, data);
+    await user.save();
+    return user;
+  }
+
+  /**
+   * Desactiva un usuario (soft delete).
+   * No se permite que un admin se desactive a sí mismo.
+   */
+  async deleteUser(id, currentUserId) {
+    if (id === currentUserId.toString()) {
+      throw new AppError(
+        "No puede desactivar su propia cuenta.",
+        400,
+        "SELF_DEACTIVATION",
+      );
     }
 
-    /**
-     * Obtiene un usuario por ID.
-     */
-    async getUserById(id) {
-        const user = await User.findById(id);
-        if (!user) {
-            throw new Error('Usuario no encontrado.');
-        }
-        return user;
-    }
+    const user = await User.findByIdAndUpdate(
+      id,
+      { estado: "inactivo" },
+      { new: true },
+    );
 
-    /**
-     * Crea un nuevo usuario.
-     */
-    async createUser(userData) {
-        const data = createUserSchema.parse(userData);
-        return await User.create(data);
-    }
-
-    /**
-     * Actualiza un usuario existente.
-     */
-    async updateUser(id, userData) {
-        const data = updateUserSchema.parse(userData);
-
-        // Si se envía password, hay que dejar que el pre-save hook lo hashee
-        if (data.password) {
-            const user = await User.findById(id);
-            if (!user) {
-                throw new Error('Usuario no encontrado.');
-            }
-            Object.assign(user, data);
-            await user.save();
-            return user;
-        }
-
-        const user = await User.findByIdAndUpdate(id, data, {
-            new: true,
-            runValidators: true,
-        });
-
-        if (!user) {
-            throw new Error('Usuario no encontrado.');
-        }
-
-        return user;
-    }
-
-    /**
-     * Desactiva un usuario (soft delete).
-     */
-    async deleteUser(id, currentUserId) {
-        if (id === currentUserId) {
-            throw new Error('No puede desactivar su propia cuenta.');
-        }
-
-        const user = await User.findByIdAndUpdate(
-            id,
-            { estado: 'inactivo' },
-            { new: true }
-        );
-
-        if (!user) {
-            throw new Error('Usuario no encontrado.');
-        }
-
-        return user;
-    }
+    if (!user)
+      throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
+    return user;
+  }
 }
 
 export default new UserService();
