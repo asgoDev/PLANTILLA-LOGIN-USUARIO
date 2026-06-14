@@ -1,4 +1,4 @@
-import auditoriaService from '../services/AuditoriaService.js';
+import auditoriaService from '../../modules/auditoria/auditoria.service.js';
 
 /**
  * Mapa de método HTTP → acción de auditoría

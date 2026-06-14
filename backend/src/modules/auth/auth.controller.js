@@ -1,5 +1,5 @@
-import authService from '../services/AuthService.js';
-import { setTokenCookies, clearTokenCookies } from '../utils/jwt.utils.js';
+import authService from './auth.service.js';
+import { setTokenCookies, clearTokenCookies } from '../../infrastructure/jwt/jwt.utils.js';
 
 /**
  * El controlador ya no compara strings de error.

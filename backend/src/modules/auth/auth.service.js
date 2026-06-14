@@ -1,10 +1,10 @@
-import User from '../models/User.js';
-import AppError from '../errors/AppError.js';
+import User from '../users/user.model.js';
+import AppError from '../../shared/errors/AppError.js';
 import {
     generateAccessToken,
     generateRefreshToken,
     verifyRefreshToken,
-} from '../utils/jwt.utils.js';
+} from '../../infrastructure/jwt/jwt.utils.js';
 
 const PUBLIC_USER_FIELDS = 'id nombre apellido email role';
 
@@ -113,7 +113,7 @@ class AuthService {
      */
     async invalidateRefreshToken(token) {
         const { createHash } = await import('crypto');
-        const { default: TokenBlacklist } = await import('../models/TokenBlacklist.js');
+        const { default: TokenBlacklist } = await import('./auth.model.js');
         const hash = createHash('sha256').update(token).digest('hex');
         await TokenBlacklist.create({ tokenHash: hash });
     }

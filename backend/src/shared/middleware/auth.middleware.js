@@ -1,4 +1,4 @@
-import { verifyAccessToken } from '../utils/jwt.utils.js';
+import { verifyAccessToken } from '../../infrastructure/jwt/jwt.utils.js';
 
 /**
  * Middleware de autenticación.

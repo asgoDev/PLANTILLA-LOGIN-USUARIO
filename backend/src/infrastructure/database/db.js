@@ -11,7 +11,7 @@ const connectDB = async () => {
       await cleanStaleIndexes(conn);
       connected = true;
     } catch (error) {
-      console.error(`❌ Error de conexión a MongoDB: ${error.message}`);
+      console.error(`❌ Error de conexión a MongoDB: ${error.error || error.message}`);
       console.log('🔄 Reintentando conectar en 5 segundos...');
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }

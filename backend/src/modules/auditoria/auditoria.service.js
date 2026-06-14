@@ -1,4 +1,4 @@
-import Auditoria from '../models/Auditoria.js';
+import Auditoria from './auditoria.model.js';
 
 class AuditoriaService {
   /**
@@ -35,7 +35,7 @@ class AuditoriaService {
    * @param {string}  [options.usuario_id]   Filtrar por usuario
    * @param {string}  [options.modulo]       Filtrar por módulo (USERS, AUTH…)
    * @param {string}  [options.accion]       CREAR | ACTUALIZAR | ELIMINAR
-   * @param {string}  [options.resultado]    EXITOSO | FALLIDO
+   * @param {string}  [options.resultado]    Filtrar por resultado
    * @param {string}  [options.desde]        ISO date — inicio del rango
    * @param {string}  [options.hasta]        ISO date — fin del rango
    * @returns {{ logs: Auditoria[], pagination: Object }}

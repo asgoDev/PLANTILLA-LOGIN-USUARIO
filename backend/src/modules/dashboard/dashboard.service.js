@@ -1,5 +1,5 @@
-import User from '../models/User.js';
-import Auditoria from '../models/Auditoria.js';
+import User from '../users/user.model.js';
+import Auditoria from '../auditoria/auditoria.model.js';
 
 class DashboardService {
     /**

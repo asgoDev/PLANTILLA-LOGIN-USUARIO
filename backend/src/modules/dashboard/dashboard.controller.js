@@ -1,4 +1,4 @@
-import dashboardService from '../services/DashboardService.js';
+import dashboardService from './dashboard.service.js';
 
 class DashboardController {
     /**

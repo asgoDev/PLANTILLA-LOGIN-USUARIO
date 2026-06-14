@@ -1,4 +1,4 @@
-import auditoriaService from '../services/AuditoriaService.js';
+import auditoriaService from './auditoria.service.js';
 
 class AuditoriaController {
     /**
@@ -40,4 +40,3 @@ class AuditoriaController {
 }
 
 export default new AuditoriaController();
-

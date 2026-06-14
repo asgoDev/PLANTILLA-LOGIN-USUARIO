@@ -1,5 +1,6 @@
-import User from "../models/User.js";
-import AppError from "../errors/AppError.js";
+import User from "./user.model.js";
+import AppError from "../../shared/errors/AppError.js";
+import mongoose from "mongoose";
 
 class UserService {
   /**
@@ -56,6 +57,9 @@ class UserService {
    * se ejecute si se envía password, sin duplicar lógica condicional.
    */
   async updateUser(id, data) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      throw new AppError("ID de usuario inválido o no provisto.", 400, "INVALID_USER_ID");
+    }
     const user = await User.findById(id).select("+password");
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");

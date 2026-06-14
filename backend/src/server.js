@@ -2,20 +2,20 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import connectDB from './config/db.js';
+import connectDB from './infrastructure/database/db.js';
 
 // ── Middleware ──
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
-import { apiLimiter } from './middleware/security.middleware.js';
-import auditMiddleware from './middleware/audit.middleware.js';
-import errorHandler from './middleware/errorHandler.js';
+import { apiLimiter } from './shared/middleware/security.middleware.js';
+import auditMiddleware from './shared/middleware/audit.middleware.js';
+import errorHandler from './shared/middleware/errorHandler.js';
 
 // ── Rutas ──
-import authRoutes from './routes/AuthRoutes.js';
-import userRoutes from './routes/UserRoutes.js';
-import dashboardRoutes from './routes/DashboardRoutes.js';
-import auditoriaRoutes from './routes/AuditoriaRoutes.js';
+import authRoutes from './modules/auth/auth.routes.js';
+import userRoutes from './modules/users/user.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import auditoriaRoutes from './modules/auditoria/auditoria.routes.js';
 
 // ── Configuración ──
 const app = express();
