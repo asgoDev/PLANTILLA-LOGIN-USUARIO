@@ -49,7 +49,7 @@ export default function NotFoundPage() {
 
         {/* Footer */}
         <p className="mt-12 text-label-sm text-outline">
-          SIGAS • Portal Institucional
+          Portal de Acceso • Control de Usuarios
         </p>
       </div>
     </div>

@@ -20,7 +20,7 @@ api.interceptors.request.use(
     } catch (storeError) {
       // Fallback a localStorage si la importación dinámica falla o está inicializándose
       try {
-        const raw = localStorage.getItem('sigas-auth');
+        const raw = localStorage.getItem('auth-storage');
         if (raw) {
           const parsed = JSON.parse(raw);
           accessToken = parsed?.state?.accessToken;
@@ -92,7 +92,7 @@ api.interceptors.response.use(
         } catch {
           // Fallback a localStorage
           try {
-            const raw = localStorage.getItem('sigas-auth');
+            const raw = localStorage.getItem('auth-storage');
             if (raw) {
               const parsed = JSON.parse(raw);
               currentRefreshToken = parsed?.state?.refreshToken;

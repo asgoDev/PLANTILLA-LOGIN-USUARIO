@@ -273,7 +273,7 @@ export default function UserFormPage() {
               label="Correo Electrónico"
               type="email"
               icon="mail"
-              placeholder="ejemplo@sigas.gob.ve"
+              placeholder="ejemplo@correo.com"
               error={errors.email?.message}
               disabled={isReadOnly}
               required={!isReadOnly}

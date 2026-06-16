@@ -1,7 +1,7 @@
 {
-  "name": "sigas-backend",
+  "name": "plantilla-login-backend",
   "version": "1.0.0",
-  "description": "Backend del Sistema Institucional de Gestión y Atención Social (SIGAS)",
+  "description": "Backend para plantilla de Login y Control de Usuarios",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
