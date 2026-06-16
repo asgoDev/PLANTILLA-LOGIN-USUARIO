@@ -44,14 +44,14 @@ export default function LoginPage() {
       {/* ── Panel Izquierdo: Branding ── */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         {/* Gradient Background */}
-        {/* <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary animate-gradient" /> */}
-        <div className="absolute inset-0 bg-[#006a3bff] bg-cover bg-[position:25%_center] bg-no-repeat blur-[1px]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-primary animate-gradient" />
+        {/* <div className="absolute inset-0 bg-[#006a3bff] bg-cover bg-[position:25%_center] bg-no-repeat blur-[1px]" /> */}
 
         {/* Pattern Overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-64 h-64 border-2 border-white/30 rounded-full" />
-          <div className="absolute bottom-32 right-16 w-48 h-48 border-2 border-white/20 rounded-full" />
-          <div className="absolute top-1/2 left-1/3 w-32 h-32 border-2 border-white/25 rounded-full animate-pulse-ring" />
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-20 left-20 w-64 h-64 border-2 border-white/35 rounded-full" />
+          <div className="absolute bottom-32 right-16 w-48 h-48 border-2 border-white/25 rounded-full" />
+          <div className="absolute bottom-1/3 left-1/4 w-32 h-32 border-2 border-white/40 rounded-full animate-pulse-ring" />
         </div>
 
         {/* Content */}
