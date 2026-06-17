@@ -26,25 +26,54 @@ Esta plantilla está diseñada para servir como punto de partida para cualquier 
 
 ## Estructura del Proyecto
 
+```text
+backend/
+├── src/
+│   ├── infrastructure/             # Configuración de servicios externos e infraestructura
+│   │   ├── database/
+│   │   │   └── db.js               # Conexión a MongoDB (Mongoose)
+│   │   └── jwt/                    # Proveedores y configs de JWT (tokens de acceso/refresh)
+│   │
+│   ├── modules/                    # Módulos de dominio y lógica de negocio
+│   │   ├── auditoria/              # Logs de auditoría
+│   │   │   ├── auditoria.controller.js
+│   │   │   ├── auditoria.model.js
+│   │   │   ├── auditoria.routes.js
+│   │   │   └── auditoria.service.js
+│   │   │
+│   │   ├── auth/                   # Autenticación (Login, refresh, logout, me)
+│   │   │   ├── auth.controller.js
+│   │   │   ├── auth.model.js
+│   │   │   ├── auth.routes.js
+│   │   │   ├── auth.service.js
+│   │   │   └── auth.validation.js
+│   │   │
+│   │   ├── dashboard/              # Estadísticas e información del dashboard
+│   │   │   ├── dashboard.controller.js
+│   │   │   ├── dashboard.routes.js
+│   │   │   └── dashboard.service.js
+│   │   │
+│   │   └── users/                  # Gestión de usuarios
+│   │       ├── user.controller.js
+│   │       ├── user.model.js
+│   │       ├── user.routes.js
+│   │       ├── user.service.js
+│   │       └── user.validation.js
+│   │
+│   ├── shared/                     # Código compartido y middlewares globales
+│   │   ├── errors/                 # Clases de errores personalizadas
+│   │   ├── middleware/             # Middlewares (autenticación, rate limiter, auditoría, manejo de errores, validaciones)
+│   │
+│   └── server.js                   # Punto de entrada de la aplicación Express
+│
+├── .env.example                    # Plantilla de variables de entorno
+├── package.json                    # Dependencias y scripts npm/pnpm
+├── request.http                    # Archivo de pruebas rápidas (VS Code REST Client)
+└── pnpm-workspace.yaml             # Configuración de monorepo si aplica
 ```
-├── backend/
-│   ├── config/          (Configuraciones del sistema y base de datos)
-│   ├── models/          (Modelos Mongoose: User, Auditoria)
-│   ├── routes/          (Rutas de Express: auth, users, dashboard)
-│   ├── controllers/     (Lógica de controladores por módulo)
-│   ├── services/        (Servicios de base de datos)
-│   ├── middleware/      (Validación de tokens, roles y seguridad)
-│   ├── validations/     (Esquemas Zod de backend)
-│   └── server.js        (Punto de entrada de backend)
-├── frontend/
-│   └── src/
-│       ├── pages/       (Login, Dashboard, Users)
-│       ├── stores/      (Stores globales de Zustand)
-│       ├── services/    (Cliente Axios y llamadas a la API)
-│       ├── components/  (Componentes UI reutilizables y layout)
-│       └── validations/ (Esquemas Zod de frontend)
-└── README.md
-```
+
+---
+
 
 ## Inicio Rápido
 
