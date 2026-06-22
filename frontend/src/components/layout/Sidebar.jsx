@@ -4,12 +4,11 @@ import Icon from '../ui/Icon';
 import toast from 'react-hot-toast';
 
 const navigation = [
-  { name: 'Dashboard', icon: 'dashboard', path: '/' },
+  { name: 'Dashboard', icon: 'dashboard', path: '/', roles: ['admin', 'usuario'] },
+  { name: 'Usuarios', icon: 'admin_panel_settings', path: '/usuarios', roles: ['admin'] },
+  { name: 'Auditoría', icon: 'history', path: '/auditoria', roles: ['admin'] },
 ];
 
-/**
- * Sidebar de navegación principal.
- */
 export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
@@ -19,6 +18,12 @@ export default function Sidebar({ isOpen, onClose }) {
     toast.success('Sesión cerrada exitosamente');
     navigate('/login');
   };
+
+  const filteredNavigation = navigation
+    .filter((item) => !item.roles || item.roles.includes(user?.role))
+    .map((item) => {
+      return item;
+    });
 
   return (
     <>
@@ -50,7 +55,7 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         <nav className="flex-1 px-md py-lg space-y-xs overflow-y-auto">
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -73,50 +78,6 @@ export default function Sidebar({ isOpen, onClose }) {
               )}
             </NavLink>
           ))}
-
-          {user?.role === 'admin' && (
-            <>
-              <NavLink
-                to="/usuarios"
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-md px-md py-sm font-label-lg text-label-lg
-                   transition-all duration-200 cursor-pointer rounded-lg
-                   ${isActive
-                    ? 'bg-secondary-container/20 text-primary border-l-4 border-secondary'
-                    : 'text-on-surface-variant hover:bg-primary-container/10 hover:text-primary active:translate-x-1'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon name="admin_panel_settings" filled={isActive} />
-                    <span>Usuarios</span>
-                  </>
-                )}
-              </NavLink>
-
-              <NavLink
-                to="/auditoria"
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex items-center gap-md px-md py-sm font-label-lg text-label-lg
-                   transition-all duration-200 cursor-pointer rounded-lg
-                   ${isActive
-                    ? 'bg-secondary-container/20 text-primary border-l-4 border-secondary'
-                    : 'text-on-surface-variant hover:bg-primary-container/10 hover:text-primary active:translate-x-1'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon name="history" filled={isActive} />
-                    <span>Auditoría</span>
-                  </>
-                )}
-              </NavLink>
-            </>
-          )}
         </nav>
 
         <div className="p-md mt-auto border-t border-outline-variant/20">
