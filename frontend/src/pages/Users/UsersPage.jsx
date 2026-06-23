@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { useUserStore } from '../../stores/userStore';
+import { useUsers, useDeleteUser, useUpdateUser } from '../../hooks/useUserQueries';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
 import Avatar from '../../components/ui/Avatar';
@@ -16,26 +16,23 @@ export default function UsersPage() {
     return <Navigate to="/" replace />;
   }
 
-  const { users, pagination, isLoading, fetchUsers, deleteUser, updateUser } = useUserStore();
-
   const [roleFilter, setRoleFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
+  const filters = {};
+  if (roleFilter) filters.role = roleFilter;
+  if (estadoFilter) filters.estado = estadoFilter;
+
+  const { data, isLoading } = useUsers(currentPage, filters);
+  const users = data?.users || [];
+  const pagination = data?.pagination || { total: 0, page: 1, pages: 1 };
+
+  const deleteUserMutation = useDeleteUser();
+  const updateUserMutation = useUpdateUser();
+
   const isAdmin = currentUser?.role === 'admin';
-
-  // Cargar usuarios cuando cambia la página o los filtros
-  useEffect(() => {
-    const filters = {};
-    if (roleFilter) filters.role = roleFilter;
-    if (estadoFilter) filters.estado = estadoFilter;
-
-    fetchUsers(currentPage, filters).catch((err) => {
-      console.error(err);
-      toast.error('Error al cargar la lista de usuarios');
-    });
-  }, [fetchUsers, currentPage, roleFilter, estadoFilter]);
 
   // Filtrar localmente por búsqueda de texto (nombre, apellido, cédula, email)
   const filteredUsers = users.filter((user) => {
@@ -74,18 +71,13 @@ export default function UsersPage() {
     try {
       if (nuevoEstado === 'inactivo') {
         // El endpoint DELETE desactiva al usuario
-        await deleteUser(user._id);
+        await deleteUserMutation.mutateAsync(user._id);
         toast.success('Usuario desactivado exitosamente.');
       } else {
         // Para activar, usamos PUT
-        await updateUser(user._id, { estado: 'activo' });
+        await updateUserMutation.mutateAsync({ id: user._id, data: { estado: 'activo' } });
         toast.success('Usuario activado exitosamente.');
       }
-      // Recargar la página actual
-      fetchUsers(currentPage, {
-        role: roleFilter || undefined,
-        estado: estadoFilter || undefined,
-      });
     } catch (err) {
       toast.error(err.response?.data?.message || `Error al ${actionLabel} al usuario.`);
     }
@@ -261,7 +253,7 @@ export default function UsersPage() {
                               e.stopPropagation();
                               handleToggleEstado(user);
                             }}
-                            disabled={user._id === currentUser._id}
+                            disabled={user._id === currentUser._id || deleteUserMutation.isPending || updateUserMutation.isPending}
                             className={`p-1.5 rounded-lg border transition-all inline-flex items-center gap-1 cursor-pointer select-none active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${user.estado === 'activo'
                               ? 'border-error/20 text-error hover:bg-error/5'
                               : 'border-primary/20 text-primary hover:bg-primary/5'

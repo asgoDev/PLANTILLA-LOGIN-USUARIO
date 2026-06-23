@@ -3,7 +3,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '../../stores/authStore';
-import { useUserStore } from '../../stores/userStore';
+import { useUserById, useCreateUser, useUpdateUser } from '../../hooks/useUserQueries';
 import { createUserSchema, updateUserSchema } from '../../validations/user.js';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
@@ -14,10 +14,15 @@ export default function UserFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
-  const { createUser, updateUser, fetchUserById, isLoading } = useUserStore();
 
   const isEditMode = !!id;
   const isReadOnly = false;
+
+  const { data: userData, isLoading: isQueryLoading, error: queryError } = useUserById(id);
+  const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
+
+  const isLoading = isQueryLoading || createUserMutation.isPending || updateUserMutation.isPending;
 
   const [cedulaTipo, setCedulaTipo] = useState('V');
   const [cedulaNum, setCedulaNum] = useState('');
@@ -59,43 +64,44 @@ export default function UserFormPage() {
     }
   }, [cedulaTipo, cedulaNum, setValue]);
 
+  // Manejar errores de carga
+  useEffect(() => {
+    if (queryError) {
+      console.error(queryError);
+      toast.error('Error al cargar la información del usuario.');
+      navigate('/usuarios');
+    }
+  }, [queryError, navigate]);
+
   // Cargar información del usuario en modo edición/lectura
   useEffect(() => {
-    if (isEditMode) {
-      fetchUserById(id)
-        .then((userData) => {
-          reset({
-            nombre: userData.nombre || '',
-            apellido: userData.apellido || '',
-            email: userData.email || '',
-            password: '', // Vacío por seguridad
-            role: userData.role || '',
-            telefono: userData.telefono || '',
-            direccion: userData.direccion || '',
-            fechaNacimiento: userData.fechaNacimiento
-              ? new Date(userData.fechaNacimiento).toISOString().split('T')[0]
-              : '',
-            cedula: userData.cedula || '',
-          });
+    if (userData) {
+      reset({
+        nombre: userData.nombre || '',
+        apellido: userData.apellido || '',
+        email: userData.email || '',
+        password: '', // Vacío por seguridad
+        role: userData.role || '',
+        telefono: userData.telefono || '',
+        direccion: userData.direccion || '',
+        fechaNacimiento: userData.fechaNacimiento
+          ? new Date(userData.fechaNacimiento).toISOString().split('T')[0]
+          : '',
+        cedula: userData.cedula || '',
+      });
 
-          // Desglosar cédula en estados locales
-          if (userData.cedula) {
-            const parts = userData.cedula.split('-');
-            if (parts.length === 2) {
-              setCedulaTipo(parts[0]);
-              setCedulaNum(parts[1]);
-            } else {
-              setCedulaNum(userData.cedula);
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          toast.error('Error al cargar la información del usuario.');
-          navigate('/usuarios');
-        });
+      // Desglosar cédula en estados locales
+      if (userData.cedula) {
+        const parts = userData.cedula.split('-');
+        if (parts.length === 2) {
+          setCedulaTipo(parts[0]);
+          setCedulaNum(parts[1]);
+        } else {
+          setCedulaNum(userData.cedula);
+        }
+      }
     }
-  }, [id, isEditMode, fetchUserById, navigate, reset]);
+  }, [userData, reset]);
 
   const handleTelefonoChange = (e) => {
     let val = e.target.value.replace(/\D/g, '');
@@ -118,10 +124,10 @@ export default function UserFormPage() {
       }
 
       if (isEditMode) {
-        await updateUser(id, userData);
+        await updateUserMutation.mutateAsync({ id, data: userData });
         toast.success('Usuario actualizado exitosamente.');
       } else {
-        await createUser(userData);
+        await createUserMutation.mutateAsync(userData);
         toast.success('Usuario registrado exitosamente.');
       }
       navigate('/usuarios');
