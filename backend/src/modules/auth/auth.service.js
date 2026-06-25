@@ -1,4 +1,3 @@
-import User from '../users/user.model.js';
 import AppError from '../../shared/errors/AppError.js';
 import {
     generateAccessToken,
@@ -9,6 +8,11 @@ import {
 const PUBLIC_USER_FIELDS = 'id nombre apellido email role';
 
 class AuthService {
+    constructor({ userRepository, tokenBlacklistRepository }) {
+        this.userRepo = userRepository;
+        this.tokenBlacklistRepo = tokenBlacklistRepository;
+    }
+
     /**
      * Autenticación de usuario con email/cédula y contraseña.
      *
@@ -25,12 +29,12 @@ class AuthService {
             ? { cedula: identifier.toUpperCase() }
             : { email: identifier.toLowerCase() };
 
-        const user = await User.findOne(query).select('+password');
+        const user = await this.userRepo.findOne(query, '+password');
 
         // Ejecutar siempre una comparación para igualar el tiempo de respuesta
         const DUMMY_HASH = '$2b$12$eImiTXuWVxfM37uY4JANjQe5ds4vAMpN8BUDKPqO4yrIbmUxKKiJy';
         const isMatch = user
-            ? await user.comparePassword(password)
+            ? await this.userRepo.comparePassword(user, password)
             : await import('bcrypt').then(({ default: bcrypt }) =>
                 bcrypt.compare(password, DUMMY_HASH)
             );
@@ -75,9 +79,8 @@ class AuthService {
         }
 
         const { createHash } = await import('crypto');
-        const { default: TokenBlacklist } = await import('./auth.model.js');
         const hash = createHash('sha256').update(token).digest('hex');
-        const isBlacklisted = await TokenBlacklist.exists({ tokenHash: hash });
+        const isBlacklisted = await this.tokenBlacklistRepo.exists({ tokenHash: hash });
         
         if (isBlacklisted) {
             throw new AppError('El token de sesión ha sido revocado.', 401, 'REVOKED_REFRESH_TOKEN');
@@ -92,7 +95,7 @@ class AuthService {
             throw err;
         }
 
-        const user = await User.findById(decoded.id);
+        const user = await this.userRepo.findById(decoded.id);
         if (!user || user.estado === 'inactivo') {
             throw new AppError('Usuario no encontrado o desactivado.', 401, 'USER_UNAVAILABLE');
         }
@@ -109,7 +112,7 @@ class AuthService {
      * Solo proyecta campos públicos para no exponer datos internos.
      */
     async getMe(userId) {
-        const user = await User.findById(userId).select(PUBLIC_USER_FIELDS);
+        const user = await this.userRepo.findById(userId, PUBLIC_USER_FIELDS);
         if (!user) {
             throw new AppError('Usuario no encontrado.', 404, 'USER_NOT_FOUND');
         }
@@ -122,10 +125,9 @@ class AuthService {
      */
     async invalidateRefreshToken(token) {
         const { createHash } = await import('crypto');
-        const { default: TokenBlacklist } = await import('./auth.model.js');
         const hash = createHash('sha256').update(token).digest('hex');
         try {
-            await TokenBlacklist.create({ tokenHash: hash });
+            await this.tokenBlacklistRepo.create({ tokenHash: hash });
         } catch (error) {
             if (error.code !== 11000) {
                 throw error;
@@ -134,4 +136,4 @@ class AuthService {
     }
 }
 
-export default new AuthService();
+export default AuthService;

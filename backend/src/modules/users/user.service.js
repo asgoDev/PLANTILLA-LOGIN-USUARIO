@@ -1,8 +1,10 @@
-import User from "./user.model.js";
 import AppError from "../../shared/errors/AppError.js";
-import mongoose from "mongoose";
 
 class UserService {
+  constructor({ userRepository }) {
+    this.userRepo = userRepository;
+  }
+
   /**
    * Obtiene todos los usuarios paginados y filtrados.
    */
@@ -14,12 +16,13 @@ class UserService {
     const skip = (Number(page) - 1) * Number(limit);
 
     const [users, total] = await Promise.all([
-      User.find(filter)
-        .skip(skip)
-        .limit(Number(limit))
-        .sort({ createdAt: -1 })
-        .lean(),
-      User.countDocuments(filter),
+      this.userRepo.findPaginated({
+        filter,
+        skip,
+        limit: Number(limit),
+        sort: { createdAt: -1 }
+      }),
+      this.userRepo.countDocuments(filter),
     ]);
 
     return {
@@ -37,7 +40,7 @@ class UserService {
    * Obtiene un usuario por ID.
    */
   async getUserById(id) {
-    const user = await User.findById(id);
+    const user = await this.userRepo.findById(id);
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
     return user;
@@ -48,7 +51,7 @@ class UserService {
    * req.body ya viene validado por validate(createUserSchema) en la ruta.
    */
   async createUser(data) {
-    return User.create(data);
+    return this.userRepo.create(data);
   }
 
   /**
@@ -57,15 +60,12 @@ class UserService {
    * se ejecute si se envía password, sin duplicar lógica condicional.
    */
   async updateUser(id, data) {
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      throw new AppError("ID de usuario inválido o no provisto.", 400, "INVALID_USER_ID");
-    }
-    const user = await User.findById(id).select("+password");
+    const user = await this.userRepo.findById(id, "+password");
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
 
     Object.assign(user, data);
-    await user.save();
+    await this.userRepo.save(user);
     return user;
   }
 
@@ -82,10 +82,10 @@ class UserService {
       );
     }
 
-    const user = await User.findByIdAndUpdate(
+    const user = await this.userRepo.findByIdAndUpdate(
       id,
       { estado: "inactivo" },
-      { new: true },
+      { new: true }
     );
 
     if (!user)
@@ -94,4 +94,4 @@ class UserService {
   }
 }
 
-export default new UserService();
+export default UserService;

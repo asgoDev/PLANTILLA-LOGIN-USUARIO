@@ -1,12 +1,15 @@
 import { Router } from 'express';
-import auditoriaController from './auditoria.controller.js';
 import { authenticate, authorize } from '../../shared/middleware/auth.middleware.js';
 
-const router = Router();
+const createAuditoriaRoutes = (auditoriaController) => {
+  const router = Router();
 
-// Solo admins autenticados pueden consultar los logs
-router.use(authenticate);
-router.use(authorize('admin'));
-router.get('/', auditoriaController.getLogs);
+  // Solo admins autenticados pueden consultar los logs
+  router.use(authenticate);
+  router.use(authorize('admin'));
+  router.get('/', (req, res, next) => auditoriaController.getLogs(req, res, next));
 
-export default router;
+  return router;
+};
+
+export default createAuditoriaRoutes;

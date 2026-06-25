@@ -1,4 +1,3 @@
-import authService from './auth.service.js';
 import { setTokenCookies, clearTokenCookies } from '../../infrastructure/jwt/jwt.utils.js';
 
 /**
@@ -7,12 +6,16 @@ import { setTokenCookies, clearTokenCookies } from '../../infrastructure/jwt/jwt
  * El controlador solo gestiona el flujo feliz y propaga errores con next(error).
  */
 class AuthController {
+    constructor({ authService }) {
+        this.authService = authService;
+    }
+
     /**
      * POST /api/auth/login
      */
     async login(req, res, next) {
         try {
-            const result = await authService.login(req.body);
+            const result = await this.authService.login(req.body);
 
             req.auditUserId = result.user.id;
             setTokenCookies(res, result.accessToken, result.refreshToken);
@@ -35,7 +38,7 @@ class AuthController {
     async refresh(req, res, next) {
         try {
             const token = req.cookies?.refreshToken || req.body?.refreshToken;
-            const result = await authService.refresh(token);
+            const result = await this.authService.refresh(token);
 
             setTokenCookies(res, result.accessToken, result.refreshToken);
 
@@ -56,7 +59,7 @@ class AuthController {
     async logout(req, res, next) {
         try {
             const token = req.cookies?.refreshToken || req.body?.refreshToken;
-            if (token) await authService.invalidateRefreshToken(token);
+            if (token) await this.authService.invalidateRefreshToken(token);
         } catch (error) {
             // No bloquear el logout si falla la invalidación; loguear y continuar
             console.error('Error al invalidar refresh token:', error);
@@ -71,7 +74,7 @@ class AuthController {
      */
     async getMe(req, res, next) {
         try {
-            const user = await authService.getMe(req.user.id);
+            const user = await this.authService.getMe(req.user.id);
             res.json(user);
         } catch (error) {
             next(error);
@@ -79,4 +82,4 @@ class AuthController {
     }
 }
 
-export default new AuthController();
+export default AuthController;

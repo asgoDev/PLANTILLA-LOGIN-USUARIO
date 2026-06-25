@@ -1,6 +1,8 @@
-import auditoriaService from './auditoria.service.js';
-
 class AuditoriaController {
+    constructor({ auditoriaService }) {
+        this.auditoriaService = auditoriaService;
+    }
+
     /**
      * GET /api/dashboard/auditoria
      *
@@ -21,7 +23,7 @@ class AuditoriaController {
             // Limitar el page size máximo para no saturar la respuesta
             const safeLimit = Math.min(Number(limit) || 50, 100);
 
-            const data = await auditoriaService.getAll({
+            const data = await this.auditoriaService.getAll({
                 page: Number(page) || 1,
                 limit: safeLimit,
                 usuario_id,
@@ -39,4 +41,4 @@ class AuditoriaController {
     }
 }
 
-export default new AuditoriaController();
+export default AuditoriaController;

@@ -1,15 +1,17 @@
-import User from '../users/user.model.js';
-import Auditoria from '../auditoria/auditoria.model.js';
-
 class DashboardService {
+    constructor({ userRepository, auditoriaRepository }) {
+        this.userRepo = userRepository;
+        this.auditoriaRepo = auditoriaRepository;
+    }
+
     /**
      * Estadísticas básicas para la pantalla de bienvenida.
      */
     async getStats() {
         const [usersCount, activeUsersCount, auditCount] = await Promise.all([
-            User.countDocuments(),
-            User.countDocuments({ estado: 'activo' }),
-            Auditoria.countDocuments(),
+            this.userRepo.countDocuments(),
+            this.userRepo.countDocuments({ estado: 'activo' }),
+            this.auditoriaRepo.countDocuments(),
         ]);
 
         return {
@@ -20,4 +22,4 @@ class DashboardService {
     }
 }
 
-export default new DashboardService();
+export default DashboardService;

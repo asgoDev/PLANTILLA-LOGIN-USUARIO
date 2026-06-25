@@ -1,12 +1,14 @@
-import userService from "./user.service.js";
-
 class UserController {
+  constructor({ userService }) {
+    this.userService = userService;
+  }
+
   /**
    * GET /api/users
    */
   async getUsers(req, res, next) {
     try {
-      const result = await userService.getUsers(req.query);
+      const result = await this.userService.getUsers(req.query);
       res.json(result);
     } catch (error) {
       next(error);
@@ -18,7 +20,7 @@ class UserController {
    */
   async getUserById(req, res, next) {
     try {
-      const user = await userService.getUserById(req.params.id);
+      const user = await this.userService.getUserById(req.params.id);
       res.json(user);
     } catch (error) {
       next(error);
@@ -30,7 +32,7 @@ class UserController {
    */
   async createUser(req, res, next) {
     try {
-      const user = await userService.createUser(req.body);
+      const user = await this.userService.createUser(req.body);
       res.status(201).json({ message: "Usuario creado exitosamente", user });
     } catch (error) {
       next(error);
@@ -42,7 +44,7 @@ class UserController {
    */
   async updateUser(req, res, next) {
     try {
-      const user = await userService.updateUser(req.params.id, req.body);
+      const user = await this.userService.updateUser(req.params.id, req.body);
       res.json({ message: "Usuario actualizado exitosamente", user });
     } catch (error) {
       next(error);
@@ -54,7 +56,7 @@ class UserController {
    */
   async deleteUser(req, res, next) {
     try {
-      const user = await userService.deleteUser(req.params.id, req.user.id);
+      const user = await this.userService.deleteUser(req.params.id, req.user.id);
       res.json({ message: "Usuario desactivado exitosamente", user });
     } catch (error) {
       next(error);
@@ -62,4 +64,4 @@ class UserController {
   }
 }
 
-export default new UserController();
+export default UserController;

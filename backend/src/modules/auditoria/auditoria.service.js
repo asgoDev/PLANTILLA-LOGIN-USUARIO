@@ -1,6 +1,8 @@
-import Auditoria from './auditoria.model.js';
-
 class AuditoriaService {
+  constructor({ auditoriaRepository }) {
+    this.auditoriaRepo = auditoriaRepository;
+  }
+
   /**
    * Registra una acción en la base de datos de auditoría.
    * Fire-and-forget: nunca lanza, solo loguea si falla.
@@ -20,7 +22,7 @@ class AuditoriaService {
    */
   async create(data) {
     try {
-      return await Auditoria.create(data);
+      return await this.auditoriaRepo.create(data);
     } catch (err) {
       console.error('⚠️  Error al registrar auditoría:', err.message);
     }
@@ -38,7 +40,7 @@ class AuditoriaService {
    * @param {string}  [options.resultado]    Filtrar por resultado
    * @param {string}  [options.desde]        ISO date — inicio del rango
    * @param {string}  [options.hasta]        ISO date — fin del rango
-   * @returns {{ logs: Auditoria[], pagination: Object }}
+   * @returns {{ logs: any[], pagination: Object }}
    */
   async getAll({
     page = 1,
@@ -66,13 +68,16 @@ class AuditoriaService {
     const skip = (Number(page) - 1) * Number(limit);
 
     const [logs, total] = await Promise.all([
-      Auditoria.find(filter)
-        .populate('usuario_id', 'nombre apellido email cedula')
-        .sort({ fecha: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .lean(),
-      Auditoria.countDocuments(filter),
+      this.auditoriaRepo.findPaginated({
+        filter,
+        skip,
+        limit: Number(limit),
+        sort: { fecha: -1 },
+        populate: [
+          { path: 'usuario_id', select: 'nombre apellido email cedula' }
+        ]
+      }),
+      this.auditoriaRepo.countDocuments(filter),
     ]);
 
     return {
@@ -87,4 +92,4 @@ class AuditoriaService {
   }
 }
 
-export default new AuditoriaService();
+export default AuditoriaService;

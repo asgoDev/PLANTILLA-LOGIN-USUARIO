@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
-import User from '../src/modules/users/user.model.js';
+import { userRepository } from '../src/container.js';
 
 /**
  * Script para crear el primer usuario admin.
@@ -11,14 +11,14 @@ const seed = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Conectado a MongoDB');
 
-        const existingAdmin = await User.findOne({ role: 'admin' });
+        const existingAdmin = await userRepository.findOne({ role: 'admin' });
         if (existingAdmin) {
             console.log('ℹ️  Ya existe un usuario admin:', existingAdmin.email);
             console.log('   No se creó un nuevo usuario.');
             process.exit(0);
         }
 
-        const admin = await User.create({
+        const admin = await userRepository.create({
             nombre: process.env.SEED_NOMBRE || 'Admin',
             apellido: process.env.SEED_APELLIDO || 'Sistema',
             cedula: process.env.SEED_CEDULA || 'V-12345678',
@@ -27,6 +27,7 @@ const seed = async () => {
             role: 'admin',
             cargo: 'Administrador',
             estado: 'activo',
+            fechaNacimiento: '1990-01-01', // Se agrega para cumplir la restricción required en Mongoose
         });
 
         console.log('🎉 Usuario admin creado exitosamente:');

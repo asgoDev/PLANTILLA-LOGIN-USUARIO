@@ -1,12 +1,14 @@
-import dashboardService from './dashboard.service.js';
-
 class DashboardController {
+    constructor({ dashboardService }) {
+        this.dashboardService = dashboardService;
+    }
+
     /**
      * GET /api/dashboard/stats
      */
     async getStats(req, res, next) {
         try {
-            const stats = await dashboardService.getStats();
+            const stats = await this.dashboardService.getStats();
             res.json(stats);
         } catch (error) {
             next(error);
@@ -14,4 +16,4 @@ class DashboardController {
     }
 }
 
-export default new DashboardController();
+export default DashboardController;

@@ -8,14 +8,16 @@ import connectDB from './infrastructure/database/db.js';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import { apiLimiter } from './shared/middleware/security.middleware.js';
-import auditMiddleware from './shared/middleware/audit.middleware.js';
+import { auditMiddleware } from './container.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 
 // ── Rutas ──
-import authRoutes from './modules/auth/auth.routes.js';
-import userRoutes from './modules/users/user.routes.js';
-import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
-import auditoriaRoutes from './modules/auditoria/auditoria.routes.js';
+import {
+    authRoutes,
+    userRoutes,
+    dashboardRoutes,
+    auditoriaRoutes,
+} from './container.js';
 
 // ── Configuración ──
 const app = express();

@@ -1,5 +1,3 @@
-import auditoriaService from '../../modules/auditoria/auditoria.service.js';
-
 /**
  * Mapa de método HTTP → acción de auditoría
  */
@@ -66,55 +64,57 @@ const sanitizeBody = (body) => {
  * El cuerpo de la respuesta se recupera desde res.__auditBody, que
  * el parche de res.json almacena sin romper el flujo normal.
  */
-const auditMiddleware = (req, res, next) => {
-  const action = METHOD_ACTION_MAP[req.method];
+const createAuditMiddleware = (auditoriaService) => {
+  return (req, res, next) => {
+    const action = METHOD_ACTION_MAP[req.method];
 
-  // Solo auditar métodos de escritura
-  if (!action) return next();
+    // Solo auditar métodos de escritura
+    if (!action) return next();
 
-  // ── Parche mínimo: capturar el body de respuesta sin interferir ──────────
-  // No devolvemos desde aquí; solo guardamos el valor para usarlo en 'finish'.
-  const originalJson = res.json.bind(res);
-  res.json = function (body) {
-    res.__auditBody = body;
-    return originalJson(body);
-  };
+    // ── Parche mínimo: capturar el body de respuesta sin interferir ──────────
+    // No devolvemos desde aquí; solo guardamos el valor para usarlo en 'finish'.
+    const originalJson = res.json.bind(res);
+    res.json = function (body) {
+      res.__auditBody = body;
+      return originalJson(body);
+    };
 
-  // ── Lógica de auditoría al finalizar la respuesta ────────────────────────
-  res.on('finish', () => {
-    const userId      = req.user?.id || req.auditUserId || null;
-    const isAuthRoute = req.originalUrl.includes('/api/auth');
+    // ── Lógica de auditoría al finalizar la respuesta ────────────────────────
+    res.on('finish', () => {
+      const userId      = req.user?.id || req.auditUserId || null;
+      const isAuthRoute = req.originalUrl.includes('/api/auth');
 
-    // Registrar si hay usuario identificado o si es ruta de autenticación
-    if (!userId && !isAuthRoute) return;
+      // Registrar si hay usuario identificado o si es ruta de autenticación
+      if (!userId && !isAuthRoute) return;
 
-    const body      = res.__auditBody;
-    const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
+      const body      = res.__auditBody;
+      const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
 
-    auditoriaService.create({
-      usuario_id: userId,
-      accion:     action,
-      modulo:     extractModule(req.originalUrl),
-      resultado:  isSuccess ? 'EXITOSO' : 'FALLIDO',
-      statusCode: res.statusCode,
-      recurso_id: extractResourceId(req, body) ?? null,
-      url:        req.originalUrl,
-      metodo:     req.method,
-      ip:         req.ip || req.socket?.remoteAddress || null,
-      userAgent:  req.headers['user-agent'] || null,
-      detalles: {
-        body:      sanitizeBody(req.body),
-        // En respuestas de error el errorHandler envía { success, message, code? }
-        // Lo capturamos para poder filtrar por tipo de error en el dashboard
-        error: !isSuccess && typeof body === 'object'
-          ? { message: body?.message, code: body?.code }
-          : undefined,
-      },
+      auditoriaService.create({
+        usuario_id: userId,
+        accion:     action,
+        modulo:     extractModule(req.originalUrl),
+        resultado:  isSuccess ? 'EXITOSO' : 'FALLIDO',
+        statusCode: res.statusCode,
+        recurso_id: extractResourceId(req, body) ?? null,
+        url:        req.originalUrl,
+        metodo:     req.method,
+        ip:         req.ip || req.socket?.remoteAddress || null,
+        userAgent:  req.headers['user-agent'] || null,
+        detalles: {
+          body:      sanitizeBody(req.body),
+          // En respuestas de error el errorHandler envía { success, message, code? }
+          // Lo capturamos para poder filtrar por tipo de error en el dashboard
+          error: !isSuccess && typeof body === 'object'
+            ? { message: body?.message, code: body?.code }
+            : undefined,
+        },
+      });
+      // fire-and-forget: el catch vive dentro de auditoriaService.create
     });
-    // fire-and-forget: el catch vive dentro de auditoriaService.create
-  });
 
-  next();
+    next();
+  };
 };
 
-export default auditMiddleware;
+export default createAuditMiddleware;

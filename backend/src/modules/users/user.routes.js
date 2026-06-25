@@ -1,18 +1,21 @@
 import { Router } from "express";
-import userController from "./user.controller.js";
 import { authenticate, authorize } from "../../shared/middleware/auth.middleware.js";
 import validate from "../../shared/middleware/validate.js";
 import { createUserSchema, updateUserSchema } from "./user.validation.js";
 
-const router = Router();
+const createUserRoutes = (userController) => {
+  const router = Router();
 
-router.use(authenticate);
-router.use(authorize("admin"));
+  router.use(authenticate);
+  router.use(authorize("admin"));
 
-router.get("/", userController.getUsers);
-router.get("/:id", userController.getUserById);
-router.post("/", validate(createUserSchema), userController.createUser);
-router.put("/:id", validate(updateUserSchema), userController.updateUser);
-router.delete("/:id", userController.deleteUser);
+  router.get("/", (req, res, next) => userController.getUsers(req, res, next));
+  router.get("/:id", (req, res, next) => userController.getUserById(req, res, next));
+  router.post("/", validate(createUserSchema), (req, res, next) => userController.createUser(req, res, next));
+  router.put("/:id", validate(updateUserSchema), (req, res, next) => userController.updateUser(req, res, next));
+  router.delete("/:id", (req, res, next) => userController.deleteUser(req, res, next));
 
-export default router;
+  return router;
+};
+
+export default createUserRoutes;
