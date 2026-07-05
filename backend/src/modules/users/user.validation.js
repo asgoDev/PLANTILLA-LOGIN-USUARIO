@@ -44,7 +44,10 @@ const email = z
 
 const password = z
   .string({ required_error: "La contraseña es requerida" })
-  .min(8, "La contraseña debe tener al menos 8 caracteres");
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .regex(/[a-z]/, "La contraseña debe contener al menos una letra minúscula")
+  .regex(/[A-Z]/, "La contraseña debe contener al menos una letra mayúscula")
+  .regex(/[0-9]/, "La contraseña debe contener al menos un número");
 
 const role = z.enum(["admin", "usuario"], {
   errorMap: () => ({ message: "El rol debe ser admin o usuario" }),

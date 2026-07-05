@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 // Leer tiempos de expiración desde el entorno para permitir ajuste sin tocar el código.
 // Si no están definidos, se usan valores razonables por defecto.
-const ACCESS_EXPIRES  = process.env.JWT_ACCESS_EXPIRES  || '15m';
+const ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES || '15m';
 const REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || '8h';
 
 export const generateAccessToken = (payload) =>
@@ -46,6 +46,7 @@ export const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('refreshToken', refreshToken, {
         ...cookieBase,
         maxAge: parseMs(REFRESH_EXPIRES),
+        path: '/api/auth', // Limitar el envío del refresh token solo a la API de autenticación
     });
 
     // Cookie legible desde JS para que el frontend sepa cuándo expira la sesión
@@ -67,7 +68,7 @@ export const clearTokenCookies = (res) => {
         path: '/',
     };
 
-    res.clearCookie('accessToken',   { ...clearOpts });
-    res.clearCookie('refreshToken',  { ...clearOpts });
+    res.clearCookie('accessToken', { ...clearOpts });
+    res.clearCookie('refreshToken', { ...clearOpts, path: '/api/auth' }); // Limpiar en el path correcto
     res.clearCookie('sessionExpiry', { ...clearOpts, httpOnly: false });
 };

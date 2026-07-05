@@ -100,6 +100,8 @@ class AuthService {
             throw new AppError('Usuario no encontrado o desactivado.', 401, 'USER_UNAVAILABLE');
         }
 
+        await this.invalidateRefreshToken(token);
+
         const tokenPayload = { id: user._id, role: user.role };
         return {
             accessToken: generateAccessToken(tokenPayload),

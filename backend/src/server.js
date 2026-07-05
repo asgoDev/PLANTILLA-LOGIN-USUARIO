@@ -21,7 +21,9 @@ import {
 
 // ── Configuración ──
 const app = express();
-app.set('trust proxy', 1); // Confiar en el reverse proxy de Render para express-rate-limit
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1); // Confiar en el reverse proxy en producción para express-rate-limit
+}
 
 const PORT = process.env.PORT || 3000;
 
@@ -57,7 +59,6 @@ app.get('/api/health', (_req, res) => {
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
     });
 });
 

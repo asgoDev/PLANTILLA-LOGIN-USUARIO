@@ -84,6 +84,10 @@ const createAuditMiddleware = (auditoriaService) => {
       const userId      = req.user?.id || req.auditUserId || null;
       const isAuthRoute = req.originalUrl.includes('/api/auth');
 
+      // Excluir la ruta de refresh para evitar el inflado masivo de la colección
+      const isRefreshRoute = req.originalUrl.includes('/api/auth/refresh');
+      if (isRefreshRoute) return;
+
       // Registrar si hay usuario identificado o si es ruta de autenticación
       if (!userId && !isAuthRoute) return;
 
