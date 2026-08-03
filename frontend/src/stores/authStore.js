@@ -11,7 +11,7 @@ export const useAuthStore = create(
       isCheckingAuth: false,
       sessionExpiry: null,
       accessToken: null,
-      refreshToken: null,
+      refreshToken: null, // Solo en memoria, NO persiste a localStorage
 
       login: async (identifier, password) => {
         set({ isLoading: true });
@@ -20,9 +20,9 @@ export const useAuthStore = create(
           set({
             user: data.user,
             isAuthenticated: true,
-            sessionExpiry: Date.now() + 8 * 60 * 60 * 1000,
+            sessionExpiry: data.sessionExpiry, // Viene del backend — única fuente de verdad
             accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
+            refreshToken: data.refreshToken,   // En memoria solamente
             isLoading: false,
           });
           return data;
@@ -56,7 +56,8 @@ export const useAuthStore = create(
           set({
             user: data,
             isAuthenticated: true,
-            sessionExpiry: Date.now() + 8 * 60 * 60 * 1000,
+            // sessionExpiry no se actualiza aquí: /auth/me no renueva tokens.
+            // La sesión se extiende solo al hacer refresh explícito del token.
           });
           return true;
         } catch (error) {
@@ -85,18 +86,22 @@ export const useAuthStore = create(
         });
       },
 
-      extendSession: () => {
-        set({ sessionExpiry: Date.now() + 8 * 60 * 60 * 1000 });
+      // Actualiza sessionExpiry y tokens tras un refresh exitoso.
+      // Llamado por el interceptor de Axios con los datos devueltos por el servidor.
+      setSessionExpiry: (expiry) => {
+        set({ sessionExpiry: expiry });
       },
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({
+        // refreshToken intencionalmente excluido de localStorage.
+        // Solo se mantiene en memoria (se pierde al cerrar el navegador).
+        // La cookie HttpOnly actúa como respaldo para renovación en el mismo dominio.
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         sessionExpiry: state.sessionExpiry,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
       }),
     }
   )

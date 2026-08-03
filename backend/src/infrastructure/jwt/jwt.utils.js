@@ -28,6 +28,9 @@ const parseMs = (str) => {
     return (units[unit] ?? 60_000) * value;
 };
 
+// Expone la duración del refresh token en ms — usada por el servicio para calcular sessionExpiry
+export const getRefreshExpiresMs = () => parseMs(REFRESH_EXPIRES);
+
 export const setTokenCookies = (res, accessToken, refreshToken) => {
     const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 

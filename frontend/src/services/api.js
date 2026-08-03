@@ -8,13 +8,38 @@ const api = axios.create({
   },
 });
 
+// ── Sincronización de refresh entre pestañas (BroadcastChannel) ──
+// Cuando una pestaña renueva el token, notifica a las demás para evitar
+// que intenten refrescar con el token ya invalidado (rotación estricta).
+let refreshChannel = null;
+try {
+  refreshChannel = new BroadcastChannel('auth-refresh');
+  refreshChannel.onmessage = async (event) => {
+    if (event.data?.type === 'TOKEN_REFRESHED') {
+      const { useAuthStore } = await import('../stores/authStore');
+      useAuthStore.setState({
+        accessToken: event.data.accessToken,
+        refreshToken: event.data.refreshToken,
+        sessionExpiry: event.data.sessionExpiry,
+      });
+    }
+    if (event.data?.type === 'LOGOUT') {
+      const { useAuthStore } = await import('../stores/authStore');
+      useAuthStore.getState().clearAuth();
+      window.location.href = '/login';
+    }
+  };
+} catch {
+  // BroadcastChannel no soportado en algunos entornos (Safari < 15.4, ciertos WebViews)
+}
+
 // ── Interceptor de petición: inyectar Authorization header ──
 api.interceptors.request.use(
   async (config) => {
     let accessToken = null;
 
     try {
-      // Intentar obtener el token de Zustand en memoria (evita latencia o bloqueos de localStorage)
+      // Obtener el token de Zustand en memoria (evita latencia o bloqueos de localStorage)
       const { useAuthStore } = await import('../stores/authStore');
       accessToken = useAuthStore.getState().accessToken;
     } catch (storeError) {
@@ -84,40 +109,38 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // Obtener refreshToken del store de forma dinámica
+        // Obtener refreshToken del store en memoria
+        // (no está en localStorage para minimizar exposición XSS)
         let currentRefreshToken = null;
         try {
           const { useAuthStore } = await import('../stores/authStore');
           currentRefreshToken = useAuthStore.getState().refreshToken;
-        } catch {
-          // Fallback a localStorage
-          try {
-            const raw = localStorage.getItem('auth-storage');
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              currentRefreshToken = parsed?.state?.refreshToken;
-            }
-          } catch {}
-        }
+        } catch {}
 
         // Enviar refreshToken tanto por cookie (automático via withCredentials)
-        // como por body (para iOS donde las cookies no llegan)
+        // como por body (para iOS/cross-origin donde las cookies HttpOnly no llegan)
         const { data } = await api.post('/auth/refresh', {
           refreshToken: currentRefreshToken,
         });
 
-        // Actualizar tokens en el store de Zustand
+        // Actualizar tokens en el store con los valores reales del servidor
         const { useAuthStore } = await import('../stores/authStore');
-        const store = useAuthStore.getState();
-        store.extendSession();
-
-        // Guardar nuevos tokens recibidos del servidor
         useAuthStore.setState({
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
+          sessionExpiry: data.sessionExpiry,
         });
 
-        // Actualizar el header del request original con el nuevo token de forma robusta
+        // Notificar a otras pestañas del refresh exitoso para que no
+        // intenten refrescar con el token ya invalidado
+        refreshChannel?.postMessage({
+          type: 'TOKEN_REFRESHED',
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          sessionExpiry: data.sessionExpiry,
+        });
+
+        // Actualizar el header del request original con el nuevo token
         if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
           originalRequest.headers.set('Authorization', `Bearer ${data.accessToken}`);
         } else {
@@ -129,9 +152,10 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError);
-        // Limpiar estado de auth y redirigir al login
+        // Limpiar estado de auth, notificar a otras pestañas y redirigir al login
         const { useAuthStore } = await import('../stores/authStore');
         useAuthStore.getState().clearAuth();
+        refreshChannel?.postMessage({ type: 'LOGOUT' });
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

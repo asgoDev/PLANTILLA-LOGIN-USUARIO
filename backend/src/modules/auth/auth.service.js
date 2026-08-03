@@ -3,6 +3,7 @@ import {
     generateAccessToken,
     generateRefreshToken,
     verifyRefreshToken,
+    getRefreshExpiresMs,
 } from '../../infrastructure/jwt/jwt.utils.js';
 
 const PUBLIC_USER_FIELDS = 'id nombre apellido email role';
@@ -67,6 +68,7 @@ class AuthService {
             },
             accessToken,
             refreshToken,
+            sessionExpiry: Date.now() + getRefreshExpiresMs(),
         };
     }
 
@@ -106,6 +108,7 @@ class AuthService {
         return {
             accessToken: generateAccessToken(tokenPayload),
             refreshToken: generateRefreshToken(tokenPayload),
+            sessionExpiry: Date.now() + getRefreshExpiresMs(),
         };
     }
 

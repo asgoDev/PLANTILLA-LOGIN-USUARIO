@@ -24,6 +24,7 @@ class AuthController {
                 message: 'Inicio de sesión exitoso',
                 user: result.user,
                 accessToken: result.accessToken,
+                sessionExpiry: result.sessionExpiry,
             });
         } catch (error) {
             if (error.userId) req.auditUserId = error.userId;
@@ -44,6 +45,7 @@ class AuthController {
             res.json({
                 message: 'Token renovado exitosamente',
                 accessToken: result.accessToken,
+                sessionExpiry: result.sessionExpiry,
             });
         } catch (error) {
             clearTokenCookies(res);
