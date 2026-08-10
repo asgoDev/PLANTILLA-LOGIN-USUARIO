@@ -42,14 +42,28 @@ const extractResourceId = (req, responseBody) => {
 };
 
 /**
- * Elimina campos sensibles del body antes de guardar en auditoría.
+ * Patrón regex para detectar nombres de campos sensibles
+ * en cualquier nivel de anidación del objeto.
  */
-const sanitizeBody = (body) => {
-  if (!body || typeof body !== 'object') return body;
-  const sanitized = { ...body };
-  const sensitiveFields = ['password', 'confirmPassword', 'accessToken', 'refreshToken'];
-  for (const field of sensitiveFields) {
-    if (field in sanitized) sanitized[field] = '[PROTEGIDO]';
+const SENSITIVE_KEYS = /^(password|confirmPassword|newPassword|oldPassword|accessToken|refreshToken|token|secret|pin|creditCard|cvv|ssn)$/i;
+
+/**
+ * Elimina campos sensibles del body de forma recursiva
+ * antes de guardar en auditoría.
+ */
+const sanitizeBody = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeBody);
+
+  const sanitized = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.test(key)) {
+      sanitized[key] = '[PROTEGIDO]';
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeBody(value);
+    } else {
+      sanitized[key] = value;
+    }
   }
   return sanitized;
 };
@@ -88,15 +102,30 @@ const createAuditMiddleware = (auditoriaService) => {
       const isRefreshRoute = req.originalUrl.includes('/api/auth/refresh');
       if (isRefreshRoute) return;
 
-      // Registrar si hay usuario identificado o si es ruta de autenticación
-      if (!userId && !isAuthRoute) return;
+      // Detectar fallos de seguridad (intentos no autorizados)
+      const isSecurityFailure = res.statusCode === 401 || res.statusCode === 403;
+
+      // Registrar si: hay usuario, es ruta auth, o es un fallo de seguridad
+      if (!userId && !isAuthRoute && !isSecurityFailure) return;
+
+      // ── Determinar acción específica para rutas de autenticación / seguridad ──
+      let finalAction = action;
+      if (isSecurityFailure && !userId) {
+        finalAction = 'ACCESO_DENEGADO';
+      } else if (isAuthRoute) {
+        if (req.originalUrl.includes('login')) {
+          finalAction = 'LOGIN';
+        } else if (req.originalUrl.includes('logout')) {
+          finalAction = 'LOGOUT';
+        }
+      }
 
       const body      = res.__auditBody;
       const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
 
       auditoriaService.create({
         usuario_id: userId,
-        accion:     action,
+        accion:     finalAction,
         modulo:     extractModule(req.originalUrl),
         resultado:  isSuccess ? 'EXITOSO' : 'FALLIDO',
         statusCode: res.statusCode,

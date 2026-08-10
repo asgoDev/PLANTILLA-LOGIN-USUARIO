@@ -22,7 +22,7 @@ const auditoriaSchema = new mongoose.Schema(
     // ── Qué ───────────────────────────────────────────────────────────────
     accion: {
       type: String,
-      enum: ['CREAR', 'ACTUALIZAR', 'ELIMINAR'],
+      enum: ['CREAR', 'ACTUALIZAR', 'ELIMINAR', 'LOGIN', 'LOGOUT', 'ACCESO_DENEGADO'],
       required: true,
     },
     modulo: {

@@ -9,7 +9,7 @@ class AuditoriaService {
    *
    * @param {Object} data
    * @param {string|null}  data.usuario_id
-   * @param {string}       data.accion        CREAR | ACTUALIZAR | ELIMINAR
+   * @param {string}       data.accion        CREAR | ACTUALIZAR | ELIMINAR | LOGIN | LOGOUT | ACCESO_DENEGADO
    * @param {string}       data.modulo
    * @param {string}       data.resultado     EXITOSO | FALLIDO
    * @param {number}       data.statusCode
@@ -36,7 +36,7 @@ class AuditoriaService {
    * @param {number}  [options.limit=50]
    * @param {string}  [options.usuario_id]   Filtrar por usuario
    * @param {string}  [options.modulo]       Filtrar por módulo (USERS, AUTH…)
-   * @param {string}  [options.accion]       CREAR | ACTUALIZAR | ELIMINAR
+   * @param {string}  [options.accion]       CREAR | ACTUALIZAR | ELIMINAR | LOGIN | LOGOUT | ACCESO_DENEGADO
    * @param {string}  [options.resultado]    Filtrar por resultado
    * @param {string}  [options.desde]        ISO date — inicio del rango
    * @param {string}  [options.hasta]        ISO date — fin del rango
@@ -62,7 +62,11 @@ class AuditoriaService {
     if (desde || hasta) {
       filter.fecha = {};
       if (desde) filter.fecha.$gte = new Date(desde);
-      if (hasta) filter.fecha.$lte = new Date(hasta);
+      if (hasta) {
+        const hastaDate = new Date(hasta);
+        hastaDate.setUTCHours(23, 59, 59, 999);
+        filter.fecha.$lte = hastaDate;
+      }
     }
 
     const skip = (Number(page) - 1) * Number(limit);
