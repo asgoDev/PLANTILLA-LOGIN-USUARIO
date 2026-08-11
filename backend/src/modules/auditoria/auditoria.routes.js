@@ -7,6 +7,7 @@ const createAuditoriaRoutes = (auditoriaController) => {
   // Solo admins autenticados pueden consultar los logs
   router.use(authenticate);
   router.use(authorize('admin'));
+  router.get('/modules', (req, res, next) => auditoriaController.getModules(req, res, next));
   router.get('/', (req, res, next) => auditoriaController.getLogs(req, res, next));
 
   return router;

@@ -1,3 +1,5 @@
+import mongoose from 'mongoose';
+
 class AuditoriaService {
   constructor({ auditoriaRepository }) {
     this.auditoriaRepo = auditoriaRepository;
@@ -34,7 +36,7 @@ class AuditoriaService {
    * @param {Object} options
    * @param {number}  [options.page=1]
    * @param {number}  [options.limit=50]
-   * @param {string}  [options.usuario_id]   Filtrar por usuario
+   * @param {string}  [options.usuario_id]   Filtrar por usuario (ID o término de búsqueda por nombre/email/cédula)
    * @param {string}  [options.modulo]       Filtrar por módulo (USERS, AUTH…)
    * @param {string}  [options.accion]       CREAR | ACTUALIZAR | ELIMINAR | LOGIN | LOGOUT | ACCESO_DENEGADO
    * @param {string}  [options.resultado]    Filtrar por resultado
@@ -54,7 +56,25 @@ class AuditoriaService {
   } = {}) {
     const filter = {};
 
-    if (usuario_id) filter.usuario_id = usuario_id;
+    if (usuario_id) {
+      const term = usuario_id.trim();
+      if (mongoose.Types.ObjectId.isValid(term) && String(new mongoose.Types.ObjectId(term)) === term) {
+        filter.usuario_id = term;
+      } else {
+        const User = mongoose.model('User');
+        const searchRegex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        const users = await User.find({
+          $or: [
+            { nombre: searchRegex },
+            { apellido: searchRegex },
+            { email: searchRegex },
+            { cedula: searchRegex },
+          ]
+        }).select('_id').lean();
+        const userIds = users.map((u) => u._id);
+        filter.usuario_id = { $in: userIds };
+      }
+    }
     if (modulo)     filter.modulo     = modulo.toUpperCase();
     if (accion)     filter.accion     = accion.toUpperCase();
     if (resultado)  filter.resultado  = resultado.toUpperCase();
@@ -93,6 +113,15 @@ class AuditoriaService {
         pages: Math.ceil(total / Number(limit)),
       },
     };
+  }
+  /**
+   * Retorna la lista de módulos únicos registrados en la colección.
+   * Útil para poblar dinámicamente los filtros en el frontend.
+   *
+   * @returns {Promise<string[]>}
+   */
+  async getModules() {
+    return this.auditoriaRepo.getDistinctModules();
   }
 }
 

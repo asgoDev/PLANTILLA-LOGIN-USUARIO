@@ -39,6 +39,14 @@ class AuditoriaController {
             next(error);
         }
     }
+    async getModules(req, res, next) {
+        try {
+            const modules = await this.auditoriaService.getModules();
+            res.json({ modules });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 export default AuditoriaController;

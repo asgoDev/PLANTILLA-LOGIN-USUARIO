@@ -25,6 +25,11 @@ class AuditoriaRepository {
   async countDocuments(filter = {}) {
     return Auditoria.countDocuments(filter);
   }
+
+  async getDistinctModules() {
+    const modules = await Auditoria.distinct('modulo');
+    return modules.sort();
+  }
 }
 
 export default AuditoriaRepository;
