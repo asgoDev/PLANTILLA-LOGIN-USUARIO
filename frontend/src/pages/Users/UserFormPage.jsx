@@ -164,36 +164,46 @@ export default function UserFormPage() {
 
   return (
     <div className="space-y-lg animate-fade-in-up max-w-4xl mx-auto">
-      {/* Breadcrumb / Title */}
-      <div className="flex items-center gap-xs text-on-surface-variant">
-        <button
-          onClick={() => navigate('/usuarios')}
-          className="hover:text-primary flex items-center gap-xs font-label-lg text-label-lg transition-colors cursor-pointer"
-        >
-          <Icon name="arrow_back" size="18px" />
-          <span>Volver a Usuarios</span>
-        </button>
-      </div>
 
-      <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm overflow-hidden">
-        {/* Card Header */}
-        <div className="bg-gradient-to-r from-primary to-primary-container p-6 text-white">
-          <div className="flex items-center gap-md">
-            <div className="p-sm bg-white/10 rounded-xl">
-              <Icon name={getPageIcon()} size="28px" />
+      {/* ── Page Header ── */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-md">
+          <button
+            onClick={() => navigate('/usuarios')}
+            className="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-primary transition-all cursor-pointer"
+            title="Volver a Usuarios"
+          >
+            <Icon name="arrow_back" size="20px" />
+          </button>
+          <div className="flex items-center gap-sm">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Icon name={getPageIcon()} size="24px" />
             </div>
             <div>
-              <h2 className="text-headline-md font-headline-md font-bold">{getPageTitle()}</h2>
-              <p className="text-body-sm text-white/80 mt-0.5">{getPageSubtitle()}</p>
+              <h2 className="text-headline-sm font-bold text-on-surface leading-tight">
+                {getPageTitle()}
+              </h2>
+              <p className="text-body-sm text-on-surface-variant mt-0.5">
+                {getPageSubtitle()}
+              </p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-lg space-y-md">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
+      {/* ── Form ── */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-0">
 
-            {/* Nombre */}
+        {/* Sección: Datos Personales */}
+        <div className="bg-surface-container-lowest rounded-t-xl border border-outline-variant/20 overflow-hidden">
+          <div className="px-lg py-md border-b border-outline-variant/15 flex items-center gap-sm">
+            <Icon name="person_outline" size="18px" className="text-primary" />
+            <span className="text-label-lg font-semibold text-on-surface-variant uppercase tracking-wide">
+              Datos Personales
+            </span>
+          </div>
+          <div className="p-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+
             <Input
               label="Nombre"
               icon="person"
@@ -204,7 +214,6 @@ export default function UserFormPage() {
               {...register('nombre')}
             />
 
-            {/* Apellido */}
             <Input
               label="Apellido"
               icon="person"
@@ -221,7 +230,6 @@ export default function UserFormPage() {
                 Cédula {!isReadOnly && <span className="text-error font-bold">*</span>}
               </label>
               <div className="flex gap-xs">
-                {/* Selector V / E */}
                 <div className="relative flex-shrink-0">
                   <select
                     value={cedulaTipo}
@@ -238,8 +246,6 @@ export default function UserFormPage() {
                     </span>
                   )}
                 </div>
-
-                {/* Input numérico */}
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline">
                     <Icon name="badge" size="20px" />
@@ -274,7 +280,38 @@ export default function UserFormPage() {
               )}
             </div>
 
-            {/* Correo Electrónico */}
+            <Input
+              label="Fecha de Nacimiento"
+              type="date"
+              icon="calendar_today"
+              error={errors.fechaNacimiento?.message}
+              disabled={isReadOnly}
+              {...register('fechaNacimiento')}
+            />
+
+            <Input
+              label="Dirección de Habitación"
+              icon="home"
+              placeholder="Ej. Av. Principal de Coro, Casa Nro. 5"
+              error={errors.direccion?.message}
+              disabled={isReadOnly}
+              className="md:col-span-2"
+              {...register('direccion')}
+            />
+
+          </div>
+        </div>
+
+        {/* Sección: Acceso y Seguridad */}
+        <div className="bg-surface-container-lowest border-x border-outline-variant/20 overflow-hidden">
+          <div className="px-lg py-md border-y border-outline-variant/15 flex items-center gap-sm">
+            <Icon name="shield" size="18px" className="text-primary" />
+            <span className="text-label-lg font-semibold text-on-surface-variant uppercase tracking-wide">
+              Acceso y Seguridad
+            </span>
+          </div>
+          <div className="p-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+
             <Input
               label="Correo Electrónico"
               type="email"
@@ -286,13 +323,12 @@ export default function UserFormPage() {
               {...register('email')}
             />
 
-            {/* Contraseña */}
             {!isReadOnly && (
               <Input
-                label={isEditMode ? "Nueva Contraseña" : "Contraseña"}
+                label={isEditMode ? 'Nueva Contraseña' : 'Contraseña'}
                 type="password"
                 icon="lock"
-                placeholder={isEditMode ? "Dejar en blanco para no modificar" : "Mínimo 6 caracteres"}
+                placeholder={isEditMode ? 'Dejar en blanco para no modificar' : 'Mínimo 6 caracteres'}
                 error={errors.password?.message}
                 required={!isEditMode}
                 {...register('password')}
@@ -338,7 +374,19 @@ export default function UserFormPage() {
               )}
             </div>
 
-            {/* Teléfono */}
+          </div>
+        </div>
+
+        {/* Sección: Información de Contacto */}
+        <div className="bg-surface-container-lowest border-x border-outline-variant/20 overflow-hidden">
+          <div className="px-lg py-md border-y border-outline-variant/15 flex items-center gap-sm">
+            <Icon name="contact_phone" size="18px" className="text-primary" />
+            <span className="text-label-lg font-semibold text-on-surface-variant uppercase tracking-wide">
+              Información de Contacto
+            </span>
+          </div>
+          <div className="p-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+
             <Input
               label="Teléfono"
               type="tel"
@@ -349,33 +397,18 @@ export default function UserFormPage() {
               {...register('telefono', { onChange: handleTelefonoChange })}
             />
 
-            {/* Fecha de Nacimiento */}
-            <Input
-              label="Fecha de Nacimiento"
-              type="date"
-              icon="calendar_today"
-              error={errors.fechaNacimiento?.message}
-              disabled={isReadOnly}
-              {...register('fechaNacimiento')}
-            />
-
-            {/* Dirección */}
-            <Input
-              label="Dirección de Habitación"
-              icon="home"
-              placeholder="Ej. Av. Principal de Coro, Casa Nro. 5"
-              error={errors.direccion?.message}
-              disabled={isReadOnly}
-              className="md:col-span-2"
-              {...register('direccion')}
-            />
-
           </div>
+        </div>
 
-          <div className="h-px bg-outline-variant/20 my-lg" />
-
-          {/* Form Actions */}
-          <div className="flex justify-end gap-md">
+        {/* ── Footer de acciones ── */}
+        <div className="bg-surface-container-lowest rounded-b-xl border border-outline-variant/20 px-lg py-md flex items-center justify-between gap-md">
+          <p className="text-body-sm text-on-surface-variant hidden sm:block">
+            {!isReadOnly && (isEditMode
+              ? 'Los campos con * son obligatorios.'
+              : 'Complete todos los campos requeridos para continuar.'
+            )}
+          </p>
+          <div className="flex gap-md ml-auto">
             <Button
               type="button"
               variant="outline"
@@ -396,9 +429,9 @@ export default function UserFormPage() {
               </Button>
             )}
           </div>
+        </div>
 
-        </form>
-      </div>
+      </form>
     </div>
   );
 }
