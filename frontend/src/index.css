@@ -8,7 +8,7 @@
    ══════════════════════════════════════════════ */
 :root,
 :root,
-[data-theme="default"] {
+[data-theme="red"] {
   /* Primary (Rojo institucional) */
   --color-primary: 179 38 30;
   /* #B3261E */
@@ -17,7 +17,7 @@
   --color-on-primary: 255 255 255;
   --color-on-primary-container: 255 251 255;
 
-  /* Secondary (Dorado corporativo) */
+  /* Secondary */
   --color-secondary: 115 92 0;
   /* #735C00 */
   --color-secondary-container: 254 214 91;
@@ -97,7 +97,7 @@
 /* ══════════════════════════════════════════════
    THEME: Emerald
    ══════════════════════════════════════════════ */
-[data-theme="emerald"] {
+[data-theme="default"] {
   --color-tertiary-fixed: 255 223 144;
   /* #ffdf90 */
   --color-error: 186 26 26;

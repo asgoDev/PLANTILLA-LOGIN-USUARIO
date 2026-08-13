@@ -1,16 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
-import { useUiStore } from '../../stores/uiStore';
 import Icon from '../ui/Icon';
 import Avatar from '../ui/Avatar';
 
 export default function TopBar({ onMenuToggle }) {
   const user = useAuthStore((s) => s.user);
-
-  const theme = useUiStore((s) => s.theme);
-  const setTheme = useUiStore((s) => s.setTheme);
+  const logout = useAuthStore((s) => s.logout);
 
   const [open, setOpen] = useState(false);
+  const panelRef = useRef(null);
 
   const fullName = user ? `${user.nombre} ${user.apellido}` : '';
 
@@ -21,8 +20,21 @@ export default function TopBar({ onMenuToggle }) {
         ? 'Usuario'
         : '';
 
+  /* Cerrar al hacer click fuera del panel */
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
   return (
     <header className="flex justify-between items-center w-full px-lg h-16 sticky top-0 z-30 bg-surface shadow-sm font-montserrat">
+      {/* ── Izquierda: burger + título ── */}
       <div className="flex items-center md:gap-lg">
         <button
           onClick={onMenuToggle}
@@ -36,10 +48,15 @@ export default function TopBar({ onMenuToggle }) {
         </h1>
       </div>
 
-      <div className="relative">
+      {/* ── Derecha: Avatar + mini-modal ── */}
+      <div className="relative" ref={panelRef}>
+        {/* Trigger: nombre + avatar */}
         <button
-          onClick={() => setOpen(!open)}
-          className="flex items-center gap-sm"
+          id="topbar-avatar-btn"
+          onClick={() => setOpen((v) => !v)}
+          className="flex items-center gap-sm group"
+          aria-haspopup="true"
+          aria-expanded={open}
         >
           <div className="text-right hidden sm:block">
             <p className="text-label-lg text-primary font-bold leading-tight">
@@ -50,44 +67,83 @@ export default function TopBar({ onMenuToggle }) {
             </p>
           </div>
 
-          <Avatar name={fullName} size="md" />
-
-          <Icon
-            name={open ? 'expand_less' : 'expand_more'}
-            className="text-on-surface-variant"
-          />
+          {/* Avatar con anillo animado al hover/open */}
+          <span
+            className={`block rounded-full transition-all duration-200
+              ring-2 ring-offset-2
+              ${open
+                ? 'ring-primary ring-offset-surface'
+                : 'ring-transparent group-hover:ring-primary/40 ring-offset-surface'
+              }`}
+          >
+            <Avatar name={fullName} size="md" />
+          </span>
         </button>
 
+        {/* ── Mini-modal ── */}
         {open && (
-          <div className="absolute right-0 mt-2 w-56 rounded-lg bg-surface border border-outline-variant shadow-lg overflow-hidden">
-            <div className="px-md py-sm border-b border-outline-variant">
-              <p className="text-label-lg text-primary font-semibold">
-                Tema visual
-              </p>
-            </div>
+          <div
+            id="topbar-user-menu"
+            role="menu"
+            className="
+              absolute right-0 top-[calc(100%+10px)]
+              w-64 rounded-2xl overflow-hidden
+              bg-surface border border-outline-variant
+              shadow-xl
+              animate-fade-in-up
+            "
+          >
 
-            {[
-              { key: 'default', label: 'Default', emoji: '🔴' },
-              { key: 'emerald', label: 'Emerald', emoji: '🟢' },
-              { key: 'ocean', label: 'Ocean', emoji: '🔵' },
-              { key: 'rose', label: 'Rose', emoji: '🌸' },
-              { key: 'slate', label: 'Slate', emoji: '⚫' },
-              { key: 'dark', label: 'Dark', emoji: '🌙' },
-              { key: 'midnight', label: 'Midnight', emoji: '🌃' },
-              { key: 'matrix', label: 'Matrix', emoji: '💻' },
-            ].map((t) => (
-              <button
-                key={t.key}
-                onClick={() => {
-                  setTheme(t.key);
-                  setOpen(false);
-                }}
-                className={`w-full px-md py-sm text-left hover:bg-surface-container transition-colors ${theme === t.key ? 'text-primary font-semibold' : ''
-                  }`}
+
+            {/* Links de navegación */}
+            <nav className="py-xs">
+              <Link
+                to="/perfil"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="
+                  flex items-center gap-sm px-md py-sm
+                  text-on-surface text-label-lg
+                  hover:bg-surface-container transition-colors
+                "
               >
-                {t.emoji} {t.label}
+                <Icon name="person" className="text-on-surface-variant" />
+                <span>Mi perfil</span>
+              </Link>
+
+              <Link
+                to="/configuracion"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="
+                  flex items-center gap-sm px-md py-sm
+                  text-on-surface text-label-lg
+                  hover:bg-surface-container transition-colors
+                "
+              >
+                <Icon name="settings" className="text-on-surface-variant" />
+                <span>Configuración</span>
+              </Link>
+            </nav>
+
+            {/* Separador + botón cerrar sesión */}
+            <div className="border-t border-outline-variant py-xs">
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                }}
+                className="
+                  w-full flex items-center gap-sm px-md py-sm
+                  text-error text-label-lg
+                  hover:bg-error/10 transition-colors
+                "
+              >
+                <Icon name="logout" />
+                <span>Cerrar sesión</span>
               </button>
-            ))}
+            </div>
           </div>
         )}
       </div>
