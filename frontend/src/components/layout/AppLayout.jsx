@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import ModalOutlet from './ModalOutlet';
 import { useUiStore } from '../../stores/uiStore';
 
 /**
@@ -18,13 +19,16 @@ export default function AppLayout() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <TopBar onMenuToggle={toggleSidebar} />
 
-        <div className="flex-1 overflow-y-auto p-lg">
+        <main className="flex-1 overflow-y-auto p-lg">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
+
+      <ModalOutlet />
     </div>
   );
 }
+

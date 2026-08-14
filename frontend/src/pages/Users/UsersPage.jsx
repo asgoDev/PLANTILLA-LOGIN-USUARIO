@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useModalStore } from '../../stores/modalStore';
 import { useUsers, useDeleteUser, useUpdateUser } from '../../hooks/useUserQueries';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
 import Avatar from '../../components/ui/Avatar';
-import UserDetailModal from './UserDetailModal';
 import toast from 'react-hot-toast';
 
 export default function UsersPage() {
   const navigate = useNavigate();
   const currentUser = useAuthStore((s) => s.user);
+  const openModal = useModalStore((s) => s.openModal);
+  const closeModal = useModalStore((s) => s.closeModal);
 
   if (!currentUser || currentUser.role !== 'admin') {
     toast.error('No tiene permisos para acceder a esta sección.');
@@ -21,7 +23,6 @@ export default function UsersPage() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedUser, setSelectedUser] = useState(null);
 
   const filters = {};
   if (roleFilter) filters.role = roleFilter;
@@ -235,7 +236,18 @@ export default function UsersPage() {
                   return (
                     <tr
                       key={user._id}
-                      onClick={() => setSelectedUser(user)}
+                      onClick={() =>
+                        openModal('userDetail', {
+                          user,
+                          currentUserId: currentUser._id,
+                          onToggleEstado: async (u) => {
+                            await handleToggleEstado(u);
+                            closeModal();
+                          },
+                          isTogglePending:
+                            deleteUserMutation.isPending || updateUserMutation.isPending,
+                        })
+                      }
                       className="hover:bg-primary-container/5 transition-colors cursor-pointer group"
                       title="Ver detalle"
                     >
@@ -321,20 +333,6 @@ export default function UsersPage() {
           </div>
         )}
       </div>
-
-      {/* Modal de detalle de usuario */}
-      {selectedUser && (
-        <UserDetailModal
-          user={selectedUser}
-          currentUserId={currentUser._id}
-          onClose={() => setSelectedUser(null)}
-          onToggleEstado={async (user) => {
-            await handleToggleEstado(user);
-            setSelectedUser(null);
-          }}
-          isTogglePending={deleteUserMutation.isPending || updateUserMutation.isPending}
-        />
-      )}
     </div>
   );
 }

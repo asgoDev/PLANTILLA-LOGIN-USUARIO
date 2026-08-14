@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useModalStore } from '../../stores/modalStore';
 import { useAuditoriaLogs, useAuditoriaModules } from '../../hooks/useAuditoriaQueries';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
-import AuditoriaDetailModal from './AuditoriaDetailModal';
 import toast from 'react-hot-toast';
 
 export default function AuditoriaPage() {
   const currentUser = useAuthStore((s) => s.user);
+  const openModal = useModalStore((s) => s.openModal);
 
   if (!currentUser || currentUser.role !== 'admin') {
     toast.error('No tiene permisos para acceder a esta sección.');
@@ -23,7 +24,6 @@ export default function AuditoriaPage() {
   const [hastaFilter, setHastaFilter] = useState('');
   const [usuarioInput, setUsuarioInput] = useState('');
   const [usuarioFilter, setUsuarioFilter] = useState('');
-  const [selectedLog, setSelectedLog] = useState(null);
 
   const filters = {};
   if (moduloFilter) filters.modulo = moduloFilter;
@@ -447,7 +447,7 @@ export default function AuditoriaPage() {
                 {logs.map((log) => (
                   <tr
                     key={log._id}
-                    onClick={() => setSelectedLog(log)}
+                    onClick={() => openModal('auditoriaDetail', { log })}
                     className="hover:bg-primary-container/5 transition-colors cursor-pointer group"
                     title="Ver detalle técnico"
                   >
@@ -524,14 +524,6 @@ export default function AuditoriaPage() {
           </div>
         )}
       </div>
-
-      {/* H-09: Modal de detalle técnico */}
-      {selectedLog && (
-        <AuditoriaDetailModal
-          log={selectedLog}
-          onClose={() => setSelectedLog(null)}
-        />
-      )}
     </div>
   );
 }
