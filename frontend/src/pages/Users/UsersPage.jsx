@@ -5,6 +5,7 @@ import { useUsers, useDeleteUser, useUpdateUser } from '../../hooks/useUserQueri
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
 import Avatar from '../../components/ui/Avatar';
+import UserDetailModal from './UserDetailModal';
 import toast from 'react-hot-toast';
 
 export default function UsersPage() {
@@ -20,6 +21,7 @@ export default function UsersPage() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const filters = {};
   if (roleFilter) filters.role = roleFilter;
@@ -233,8 +235,9 @@ export default function UsersPage() {
                   return (
                     <tr
                       key={user._id}
-                      onClick={() => navigate(`/usuarios/${user._id}`)}
-                      className="hover:bg-primary-container/5 transition-colors cursor-pointer"
+                      onClick={() => setSelectedUser(user)}
+                      className="hover:bg-primary-container/5 transition-colors cursor-pointer group"
+                      title="Ver detalle"
                     >
                       <td className="py-md px-lg flex items-center gap-sm">
                         <Avatar name={fullName} size="md" />
@@ -248,23 +251,36 @@ export default function UsersPage() {
                       <td className="py-md px-lg">{renderEstadoBadge(user.estado)}</td>
                       {isAdmin && (
                         <td className="py-md px-lg text-right">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleEstado(user);
-                            }}
-                            disabled={user._id === currentUser._id || deleteUserMutation.isPending || updateUserMutation.isPending}
-                            className={`p-1.5 rounded-lg border transition-all inline-flex items-center gap-1 cursor-pointer select-none active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${user.estado === 'activo'
-                              ? 'border-error/20 text-error hover:bg-error/5'
-                              : 'border-primary/20 text-primary hover:bg-primary/5'
+                          <div className="inline-flex items-center gap-xs justify-end">
+                            {/* Botón Editar */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/usuarios/${user._id}`);
+                              }}
+                              className="p-1.5 rounded-lg border border-outline-variant/20 text-on-surface-variant hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer active:scale-95"
+                              title="Editar usuario"
+                            >
+                              <Icon name="edit" size="18px" />
+                            </button>
+
+                            {/* Botón Activar / Desactivar */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleEstado(user);
+                              }}
+                              disabled={user._id === currentUser._id || deleteUserMutation.isPending || updateUserMutation.isPending}
+                              className={`p-1.5 rounded-lg border transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                                user.estado === 'activo'
+                                  ? 'border-error/20 text-error hover:bg-error/5'
+                                  : 'border-primary/20 text-primary hover:bg-primary/5'
                               }`}
-                            title={user.estado === 'activo' ? 'Desactivar Cuenta' : 'Activar Cuenta'}
-                          >
-                            <Icon name={user.estado === 'activo' ? 'block' : 'check_circle'} size="18px" />
-                            <span className="text-xs font-semibold">
-                              {user.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                            </span>
-                          </button>
+                              title={user.estado === 'activo' ? 'Desactivar Cuenta' : 'Activar Cuenta'}
+                            >
+                              <Icon name={user.estado === 'activo' ? 'block' : 'check_circle'} size="18px" />
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -305,6 +321,20 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de detalle de usuario */}
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          currentUserId={currentUser._id}
+          onClose={() => setSelectedUser(null)}
+          onToggleEstado={async (user) => {
+            await handleToggleEstado(user);
+            setSelectedUser(null);
+          }}
+          isTogglePending={deleteUserMutation.isPending || updateUserMutation.isPending}
+        />
+      )}
     </div>
   );
 }
