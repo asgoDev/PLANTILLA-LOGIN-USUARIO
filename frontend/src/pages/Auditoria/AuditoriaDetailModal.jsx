@@ -29,11 +29,13 @@ export default function AuditoriaDetailModal({ log }) {
   };
 
   const getUserLabel = (logItem) => {
-    if (logItem.usuario_id && typeof logItem.usuario_id === 'object') {
-      const { nombre, apellido, email } = logItem.usuario_id;
-      return `${nombre} ${apellido} (${email})`;
+    const userObj = logItem.usuario || logItem.usuario_id;
+    if (userObj && typeof userObj === 'object') {
+      const { nombre, apellido, email } = userObj;
+      const full = `${nombre || ''} ${apellido || ''}`.trim();
+      return full ? `${full} (${email || ''})` : userObj.id || '—';
     }
-    return logItem.usuario_id || '—';
+    return userObj || '—';
   };
 
   const accionColors = {

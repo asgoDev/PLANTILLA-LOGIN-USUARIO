@@ -39,7 +39,8 @@ export default function AuditoriaPage() {
   const { data: modulesData } = useAuditoriaModules();
   const availableModules = modulesData || [];
 
-  const logs = data?.logs || [];
+  // El envelope retorna { data: [], pagination: {} }
+  const logs = data?.data || [];
   const pagination = data?.pagination || { total: 0, page: 1, pages: 1, limit: 50 };
 
   const hasActiveFilters =
@@ -76,30 +77,35 @@ export default function AuditoriaPage() {
       return;
     }
 
+    // Campos disponibles en el DTO de auditoría: id, modulo, accion, resultado, statusCode, metodo, url, recurso_id, usuario, ip, userAgent, detalles, fecha
     const headers = [
-      'Fecha', 'Usuario', 'Email', 'Módulo', 'Acción',
-      'Resultado', 'Código HTTP', 'Método', 'URL', 'Recurso ID', 'IP', 'User-Agent',
+      'Fecha', 'Usuario', 'Email', 'Cédula', 'Módulo', 'Acción', 'Resultado', 'Código HTTP', 'Método', 'URL', 'Recurso ID', 'IP', 'User-Agent',
     ];
 
     const rows = logs.map((log) => {
-      const usuario =
-        log.usuario_id && typeof log.usuario_id === 'object'
-          ? `${log.usuario_id.nombre} ${log.usuario_id.apellido}`
-          : (log.usuario_id || '');
+      const nombre =
+        log.usuario && typeof log.usuario === 'object'
+          ? `${log.usuario.nombre ?? ''} ${log.usuario.apellido ?? ''}`.trim()
+          : (log.usuario?.id || '');
       const email =
-        log.usuario_id && typeof log.usuario_id === 'object'
-          ? (log.usuario_id.email || '')
+        log.usuario && typeof log.usuario === 'object'
+          ? (log.usuario.email || '')
+          : '';
+      const cedula =
+        log.usuario && typeof log.usuario === 'object'
+          ? (log.usuario.cedula || '')
           : '';
       const fecha = log.fecha ? new Date(log.fecha).toLocaleString('es-VE') : '';
 
       return [
         fecha,
-        usuario,
+        nombre,
         email,
+        cedula,
         log.modulo || '',
         log.accion || '',
         log.resultado || '',
-        log.statusCode || '',
+        log.statusCode ?? '',
         log.metodo || '',
         log.url || '',
         log.recurso_id || '',
@@ -183,10 +189,12 @@ export default function AuditoriaPage() {
   };
 
   const getUserLabel = (log) => {
-    if (log.usuario_id && typeof log.usuario_id === 'object') {
-      return `${log.usuario_id.nombre} ${log.usuario_id.apellido}`;
+    if (log.usuario && typeof log.usuario === 'object') {
+      const nombre = log.usuario.nombre ?? '';
+      const apellido = log.usuario.apellido ?? '';
+      return `${nombre} ${apellido}`.trim() || log.usuario.id || '—';
     }
-    return log.usuario_id || '—';
+    return log.usuario?.id || '—';
   };
 
   // Clases de input/select reutilizables
@@ -446,7 +454,7 @@ export default function AuditoriaPage() {
                 {/* H-09: cada fila abre el modal al hacer clic */}
                 {logs.map((log) => (
                   <tr
-                    key={log._id}
+                    key={log.id}
                     onClick={() => openModal('auditoriaDetail', { log })}
                     className="hover:bg-primary-container/5 transition-colors cursor-pointer group"
                     title="Ver detalle técnico"
@@ -467,14 +475,18 @@ export default function AuditoriaPage() {
                       {renderResultadoBadge(log.resultado)}
                     </td>
                     <td className="py-md px-lg">
-                      <span
-                        className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${log.statusCode >= 400
-                          ? 'bg-error-container/20 text-error'
-                          : 'bg-primary/10 text-primary'
-                          }`}
-                      >
-                        {log.statusCode}
-                      </span>
+                      {log.statusCode ? (
+                        <span
+                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${log.statusCode >= 400
+                            ? 'bg-error-container/20 text-error'
+                            : 'bg-primary/10 text-primary'
+                            }`}
+                        >
+                          {log.statusCode}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="py-md px-lg text-on-surface-variant text-xs font-mono truncate max-w-[160px]">
                       {log.url || '—'}

@@ -49,11 +49,12 @@ backend/
 │   │   └── dashboard/            # Métricas (controller, service)
 │   │
 │   └── shared/                   # Compartido
+│       ├── dtos/                 # Data Transfer Objects (user, auditoria, dashboard, response)
 │       ├── errors/               # Clases de error (AppError, UnauthorizedError, ValidationError, etc.)
 │       └── middleware/           # auth.middleware, audit.middleware, rateLimiter, errorHandler, validate.middleware
 ```
 
-**Flujo Backend**: `Route` ➔ `Validation Middleware (Zod)` ➔ `Controller` ➔ `Service` ➔ `Repository` ➔ `Mongoose Model`.
+**Flujo Backend**: `Route` ➔ `Validation Middleware (Zod)` ➔ `Controller` ➔ `Service` ➔ `Repository` ➔ `Mongoose Model` ➔ `DTO (Transformación)` ➔ `Response Envelope`.
 
 ### Frontend (`/frontend`)
 Estructurado por páginas, componentes de UI/Layout, servicios API y Zustand stores.
@@ -185,3 +186,37 @@ Al expandir o modificar esta plantilla, sigue el patrón del proyecto:
    - Si requiere estado global, crear una store Zustand en `frontend/src/stores/`.
    - Crear componentes de página en `frontend/src/pages/`.
    - Registrar las rutas correspondientes en `frontend/src/App.jsx`.
+
+---
+
+## 9. Implementaciones Futuras Pendientes
+
+### 🔮 Fase 3: Política de Retención TTL / Archivado de Auditoría (Hallazgo H-06)
+
+> **Estado:** ⏳ Pendiente — Se implementará cuando la infraestructura y la demanda del sistema lo requieran.
+
+**Problema:** La colección `auditorias` en MongoDB crece indefinidamente. Sin una política de retención, el almacenamiento aumentará progresivamente y las consultas sobre datos históricos pueden degradarse en rendimiento a largo plazo.
+
+**Solución Propuesta (para implementar en el futuro):**
+
+1. **Índice TTL en MongoDB**: Agregar un índice TTL en el campo `fecha` del modelo `Auditoria` para que MongoDB elimine automáticamente los documentos más antiguos que un periodo configurable (ej. 90 o 180 días).
+   ```javascript
+   // En auditoria.model.js
+   auditoriaSchema.index({ fecha: 1 }, { expireAfterSeconds: 7776000 }); // 90 días
+   ```
+
+2. **Archivado previo a la purga (opcional)**: Antes de que los documentos expiren, exportarlos a un almacenamiento de menor costo (archivos JSON comprimidos, S3, etc.) mediante un cron job o tarea programada.
+
+3. **Variable de entorno configurable**: Permitir definir el TTL desde `.env`:
+   ```env
+   AUDIT_RETENTION_DAYS=90
+   ```
+
+4. **Panel de configuración (opcional)**: Agregar una sección en el panel admin para visualizar estadísticas de almacenamiento de auditoría y configurar la retención.
+
+**Motivo de aplazamiento:** El sistema actual no maneja suficiente volumen de datos ni dispone de infraestructura de servidores que justifique la implementación inmediata. Se priorizará cuando:
+- La colección `auditorias` supere los 100.000 documentos.
+- Se detecte degradación en tiempos de consulta.
+- Se migre a una infraestructura con mayor capacidad.
+
+**Referencia:** Ver [AUDIT_ANALYSIS_REPORT.md](file:///c:/Users/AsgoDev/Desktop/Proyectos/AsgoDev/PLANTILLA%20LOGIN-USUARIO/AUDIT_ANALYSIS_REPORT.md), Hallazgo **H-06** (Gravedad 🟡 Media).

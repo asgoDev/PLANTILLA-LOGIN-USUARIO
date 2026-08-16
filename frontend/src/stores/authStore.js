@@ -11,21 +11,24 @@ export const useAuthStore = create(
       isCheckingAuth: false,
       sessionExpiry: null,
       accessToken: null,
-      refreshToken: null, // Solo en memoria, NO persiste a localStorage
+      // refreshToken ya NO se almacena en el store; viaja exclusivamente
+      // por cookie HttpOnly gestionada por el servidor.
 
       login: async (identifier, password) => {
         set({ isLoading: true });
         try {
-          const { data } = await authService.login(identifier, password);
+          // El response viene envuelto en el envelope: { success, data: { user, accessToken, sessionExpiry } }
+          const { data: envelope } = await authService.login(identifier, password);
+          const payload = envelope.data;
           set({
-            user: data.user,
+            user: payload.user,
             isAuthenticated: true,
-            sessionExpiry: data.sessionExpiry, // Viene del backend — única fuente de verdad
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,   // En memoria solamente
+            sessionExpiry: payload.sessionExpiry, // Viene del backend — única fuente de verdad
+            accessToken: payload.accessToken,
+            // refreshToken viaja por cookie HttpOnly, no se almacena aquí
             isLoading: false,
           });
-          return data;
+          return payload;
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -34,8 +37,8 @@ export const useAuthStore = create(
 
       logout: async () => {
         try {
-          const token = get().refreshToken;
-          await authService.logout(token);
+          // El refreshToken viaja por cookie HttpOnly; no se necesita enviarlo en el body
+          await authService.logout();
         } catch {
           // Continuar con logout local aunque falle el servidor
         } finally {
@@ -44,7 +47,6 @@ export const useAuthStore = create(
             isAuthenticated: false,
             sessionExpiry: null,
             accessToken: null,
-            refreshToken: null,
           });
         }
       },
@@ -52,9 +54,10 @@ export const useAuthStore = create(
       checkAuth: async ({ silent = false } = {}) => {
         if (!silent) set({ isCheckingAuth: true });
         try {
-          const { data } = await authService.me();
+          // El response viene envuelto en el envelope: { success, data: { id, nombre, ... } }
+          const { data: envelope } = await authService.me();
           set({
-            user: data,
+            user: envelope.data,
             isAuthenticated: true,
             // sessionExpiry no se actualiza aquí: /auth/me no renueva tokens.
             // La sesión se extiende solo al hacer refresh explícito del token.
@@ -67,7 +70,6 @@ export const useAuthStore = create(
               isAuthenticated: false,
               sessionExpiry: null,
               accessToken: null,
-              refreshToken: null,
             });
           }
           return false;
@@ -82,7 +84,6 @@ export const useAuthStore = create(
           isAuthenticated: false,
           sessionExpiry: null,
           accessToken: null,
-          refreshToken: null,
         });
       },
 
@@ -95,9 +96,8 @@ export const useAuthStore = create(
     {
       name: 'auth-storage',
       partialize: (state) => ({
-        // refreshToken intencionalmente excluido de localStorage.
-        // Solo se mantiene en memoria (se pierde al cerrar el navegador).
-        // La cookie HttpOnly actúa como respaldo para renovación en el mismo dominio.
+        // refreshToken excluido: viaja exclusivamente por cookie HttpOnly.
+        // La cookie actúa como respaldo para renovación en el mismo dominio.
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         sessionExpiry: state.sessionExpiry,

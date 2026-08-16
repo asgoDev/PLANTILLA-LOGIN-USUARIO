@@ -35,15 +35,19 @@ export function toAuditoriaDTO(log) {
   }
 
   return {
-    id:        String(log._id ?? log.id),
-    modulo:    log.modulo,
-    accion:    log.accion,
-    resultado: log.resultado,
+    id:         String(log._id ?? log.id),
+    modulo:     log.modulo,
+    accion:     log.accion,
+    resultado:  log.resultado,
+    statusCode: log.statusCode ?? null,
+    metodo:     log.metodo     ?? null,
+    url:        log.url        ?? null,
+    recurso_id: log.recurso_id ?? null,
     usuario,
-    ip:        log.ip        ?? null,
-    userAgent: log.userAgent ?? null,
-    detalles:  log.detalles  ?? null,
-    fecha:     log.fecha,
+    ip:         log.ip         ?? null,
+    userAgent:  log.userAgent  ?? null,
+    detalles:   log.detalles   ?? null,
+    fecha:      log.fecha,
   };
 }
 

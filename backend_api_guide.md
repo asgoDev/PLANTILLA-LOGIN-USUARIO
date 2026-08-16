@@ -401,6 +401,10 @@ La URL base de la API es `http://localhost:5000/api` (o la configurada en tu ent
           "modulo": "USERS",
           "accion": "CREAR",
           "resultado": "EXITOSO",
+          "statusCode": 201,
+          "metodo": "POST",
+          "url": "/api/users",
+          "recurso_id": "66704b281f9b3e1a4c8e7d22",
           "usuario": {
             "id": "66704b281f9b3e1a4c8e7d21",
             "nombre": "Jesus",
@@ -411,7 +415,7 @@ La URL base de la API es `http://localhost:5000/api` (o la configurada en tu ent
           "ip": "::1",
           "userAgent": "Mozilla/5.0...",
           "detalles": {
-            "recurso_id": "66704b281f9b3e1a4c8e7d22"
+            "body": { ... }
           },
           "fecha": "2026-06-17T14:35:00.000Z"
         }

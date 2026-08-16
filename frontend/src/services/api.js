@@ -19,8 +19,8 @@ try {
       const { useAuthStore } = await import('../stores/authStore');
       useAuthStore.setState({
         accessToken: event.data.accessToken,
-        refreshToken: event.data.refreshToken,
         sessionExpiry: event.data.sessionExpiry,
+        // refreshToken viaja por cookie HttpOnly, no se sincroniza por BroadcastChannel
       });
     }
     if (event.data?.type === 'LOGOUT') {
@@ -119,33 +119,34 @@ api.interceptors.response.use(
 
         // Enviar refreshToken tanto por cookie (automático via withCredentials)
         // como por body (para iOS/cross-origin donde las cookies HttpOnly no llegan)
-        const { data } = await api.post('/auth/refresh', {
+        // refreshToken viaja solo por cookie HttpOnly; el body solo devuelve
+        // accessToken y sessionExpiry dentro del envelope { success, data: { ... } }
+        const { data: envelope } = await api.post('/auth/refresh', {
           refreshToken: currentRefreshToken,
         });
+        const payload = envelope.data;
 
         // Actualizar tokens en el store con los valores reales del servidor
         const { useAuthStore } = await import('../stores/authStore');
         useAuthStore.setState({
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          sessionExpiry: data.sessionExpiry,
+          accessToken: payload.accessToken,
+          sessionExpiry: payload.sessionExpiry,
         });
 
         // Notificar a otras pestañas del refresh exitoso para que no
         // intenten refrescar con el token ya invalidado
         refreshChannel?.postMessage({
           type: 'TOKEN_REFRESHED',
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          sessionExpiry: data.sessionExpiry,
+          accessToken: payload.accessToken,
+          sessionExpiry: payload.sessionExpiry,
         });
 
         // Actualizar el header del request original con el nuevo token
         if (originalRequest.headers && typeof originalRequest.headers.set === 'function') {
-          originalRequest.headers.set('Authorization', `Bearer ${data.accessToken}`);
+          originalRequest.headers.set('Authorization', `Bearer ${payload.accessToken}`);
         } else {
           originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${payload.accessToken}`;
         }
 
         processQueue(null);

@@ -4,6 +4,7 @@ import { dashboardService } from '../services/dashboardService';
 export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard', 'stats'],
-    queryFn: () => dashboardService.getStats().then((res) => res.data),
+    // Unwrap del envelope: las estadísticas vienen en res.data.data
+    queryFn: () => dashboardService.getStats().then((res) => res.data.data),
   });
 }

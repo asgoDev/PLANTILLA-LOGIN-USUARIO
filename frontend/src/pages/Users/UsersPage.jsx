@@ -29,7 +29,8 @@ export default function UsersPage() {
   if (estadoFilter) filters.estado = estadoFilter;
 
   const { data, isLoading } = useUsers(currentPage, filters);
-  const users = data?.users || [];
+  // El envelope retorna { data: [], pagination: {} }
+  const users = data?.data || [];
   const pagination = data?.pagination || { total: 0, page: 1, pages: 1 };
 
   const deleteUserMutation = useDeleteUser();
@@ -59,7 +60,7 @@ export default function UsersPage() {
   const handleToggleEstado = async (user) => {
     if (!isAdmin) return;
 
-    if (user._id === currentUser._id) {
+    if (user.id === currentUser.id) {
       toast.error('No puede modificar el estado de su propia cuenta.');
       return;
     }
@@ -74,11 +75,11 @@ export default function UsersPage() {
     try {
       if (nuevoEstado === 'inactivo') {
         // El endpoint DELETE desactiva al usuario
-        await deleteUserMutation.mutateAsync(user._id);
+        await deleteUserMutation.mutateAsync(user.id);
         toast.success('Usuario desactivado exitosamente.');
       } else {
         // Para activar, usamos PUT
-        await updateUserMutation.mutateAsync({ id: user._id, data: { estado: 'activo' } });
+        await updateUserMutation.mutateAsync({ id: user.id, data: { estado: 'activo' } });
         toast.success('Usuario activado exitosamente.');
       }
     } catch (err) {
@@ -235,11 +236,11 @@ export default function UsersPage() {
                   const fullName = `${user.nombre} ${user.apellido}`;
                   return (
                     <tr
-                      key={user._id}
+                      key={user.id}
                       onClick={() =>
                         openModal('userDetail', {
                           user,
-                          currentUserId: currentUser._id,
+                          currentUserId: currentUser.id,
                           onToggleEstado: async (u) => {
                             await handleToggleEstado(u);
                             closeModal();
@@ -268,7 +269,7 @@ export default function UsersPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/usuarios/${user._id}`);
+                                navigate(`/usuarios/${user.id}`);
                               }}
                               className="p-1.5 rounded-lg border border-outline-variant/20 text-on-surface-variant hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer active:scale-95"
                               title="Editar usuario"
@@ -282,7 +283,7 @@ export default function UsersPage() {
                                 e.stopPropagation();
                                 handleToggleEstado(user);
                               }}
-                              disabled={user._id === currentUser._id || deleteUserMutation.isPending || updateUserMutation.isPending}
+                              disabled={user.id === currentUser.id || deleteUserMutation.isPending || updateUserMutation.isPending}
                               className={`p-1.5 rounded-lg border transition-all cursor-pointer active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
                                 user.estado === 'activo'
                                   ? 'border-error/20 text-error hover:bg-error/5'

@@ -30,7 +30,7 @@ export default function UserDetailModal({
 
   const fullName = `${user.nombre} ${user.apellido}`;
   const isActivo = user.estado === 'activo';
-  const isSelf = user._id === currentUserId;
+  const isSelf = user.id === currentUserId;
 
   const formatFecha = (fechaStr) => {
     if (!fechaStr) return '—';
@@ -129,7 +129,7 @@ export default function UserDetailModal({
         <button
           onClick={() => {
             closeModal();
-            navigate(`/usuarios/${user._id}`);
+            navigate(`/usuarios/${user.id}`);
           }}
           className="inline-flex items-center gap-xs px-4 py-2 rounded-lg border border-primary/30 text-primary hover:bg-primary/5 transition-all text-label-sm font-semibold active:scale-95"
           title="Editar usuario"
