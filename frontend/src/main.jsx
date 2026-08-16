@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             style: {
               background: '#eaedff',
               color: '#00174a',
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: 'var(--font-primary), sans-serif',
               fontSize: '14px',
               fontWeight: '500',
               borderRadius: '12px',

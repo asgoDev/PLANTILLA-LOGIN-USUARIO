@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { siteConfig } from '../config/site.config';
 
 export const useUiStore = create(
   persist(
@@ -9,7 +10,7 @@ export const useUiStore = create(
       toggleSidebar: () =>
         set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
-      theme: 'default',
+      theme: siteConfig.defaultTheme,
       setTheme: (theme) => set({ theme }),
     }),
     {

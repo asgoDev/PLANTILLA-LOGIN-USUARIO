@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { siteConfig } from '../../config/site.config';
 import Icon from '../ui/Icon';
 import toast from 'react-hot-toast';
 
@@ -49,7 +50,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
           <hr className="w-[75%] h-px bg-primary" />
           <div className="text-center">
-            <h2 className="text-headline-sm font-headline-sm text-primary">Plantilla</h2>
+            <h2 className="text-headline-sm font-headline-sm text-primary">{siteConfig.siteName}</h2>
             <p className="text-label-sm text-on-surface-variant">Login &amp; Usuarios</p>
           </div>
         </div>

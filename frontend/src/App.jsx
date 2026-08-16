@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
 import { useUiStore } from './stores/uiStore';
+import { siteConfig } from './config/site.config';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/Login/LoginPage';
@@ -46,6 +47,49 @@ function App() {
     };
   }, [checkAuth, isAuthenticated]);
 
+  // ── Identidad del sitio (corre una sola vez al montar) ──────────
+  useEffect(() => {
+    // Título de pestaña
+    document.title = siteConfig.siteTitle;
+
+    // Helper para crear/actualizar <meta name="...">
+    const setMeta = (name, content) => {
+      let tag = document.querySelector(`meta[name="${name}"]`);
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', content);
+    };
+    setMeta('description', siteConfig.siteDescription);
+    setMeta('theme-color', siteConfig.themeColorMeta);
+
+    // Favicon
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.rel = 'icon';
+      document.head.appendChild(favicon);
+    }
+    favicon.href = siteConfig.favicon;
+
+    // Google Fonts — solo inyecta el link si no existe ya
+    if (!document.querySelector(`link[href="${siteConfig.typography.googleFontsUrl}"]`)) {
+      const fontLink = document.createElement('link');
+      fontLink.rel = 'stylesheet';
+      fontLink.href = siteConfig.typography.googleFontsUrl;
+      document.head.appendChild(fontLink);
+    }
+
+    // Variable CSS --font-primary usada por Tailwind y main.jsx
+    document.documentElement.style.setProperty(
+      '--font-primary',
+      `'${siteConfig.typography.fontFamily}'`
+    );
+  }, []);
+
+  // ── Tema ────────────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);

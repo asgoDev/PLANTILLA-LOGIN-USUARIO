@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
 import { loginSchema } from '../../validations/auth.js';
+import { siteConfig } from '../../config/site.config';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
@@ -62,7 +63,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-display-lg font-display-lg text-center mb-4">
-            Plantilla Web
+            {siteConfig.siteName}
           </h1>
           <p className="text-body-lg text-center text-white/80 max-w-md leading-relaxed">
             Autenticación JWT, usuarios y auditoría
@@ -102,7 +103,7 @@ export default function LoginPage() {
             <div className="w-20 h-20 rounded-xl flex items-center justify-center bg-primary-container/20 text-primary">
               <Icon name="shield" className="text-4xl" />
             </div>
-            <h1 className="text-headline-md font-headline-md text-primary">Plantilla Web</h1>
+            <h1 className="text-headline-md font-headline-md text-primary">{siteConfig.siteName}</h1>
           </div>
 
           {/* Header */}
