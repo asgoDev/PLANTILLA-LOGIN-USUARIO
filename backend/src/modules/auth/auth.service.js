@@ -5,8 +5,7 @@ import {
     verifyRefreshToken,
     getRefreshExpiresMs,
 } from '../../infrastructure/jwt/jwt.utils.js';
-
-const PUBLIC_USER_FIELDS = 'id nombre apellido email role';
+import { toSessionUserDTO } from '../../shared/dtos/user.dto.js';
 
 class AuthService {
     constructor({ userRepository, tokenBlacklistRepository }) {
@@ -59,13 +58,7 @@ class AuthService {
         const refreshToken = generateRefreshToken(tokenPayload);
 
         return {
-            user: {
-                id: user._id,
-                nombre: user.nombre,
-                apellido: user.apellido,
-                email: user.email,
-                role: user.role,
-            },
+            user: toSessionUserDTO(user),
             accessToken,
             refreshToken,
             sessionExpiry: Date.now() + getRefreshExpiresMs(),
@@ -117,11 +110,11 @@ class AuthService {
      * Solo proyecta campos públicos para no exponer datos internos.
      */
     async getMe(userId) {
-        const user = await this.userRepo.findById(userId, PUBLIC_USER_FIELDS);
+        const user = await this.userRepo.findById(userId);
         if (!user) {
             throw new AppError('Usuario no encontrado.', 404, 'USER_NOT_FOUND');
         }
-        return user;
+        return toSessionUserDTO(user);
     }
 
     /**

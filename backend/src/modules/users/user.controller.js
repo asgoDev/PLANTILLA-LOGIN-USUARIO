@@ -1,3 +1,5 @@
+import { successResponse, paginatedResponse } from "../../shared/dtos/response.dto.js";
+
 class UserController {
   constructor({ userService }) {
     this.userService = userService;
@@ -9,7 +11,7 @@ class UserController {
   async getUsers(req, res, next) {
     try {
       const result = await this.userService.getUsers(req.query);
-      res.json(result);
+      res.json(paginatedResponse(result.users, result.pagination));
     } catch (error) {
       next(error);
     }
@@ -21,7 +23,7 @@ class UserController {
   async getUserById(req, res, next) {
     try {
       const user = await this.userService.getUserById(req.params.id);
-      res.json(user);
+      res.json(successResponse(user));
     } catch (error) {
       next(error);
     }
@@ -33,7 +35,7 @@ class UserController {
   async createUser(req, res, next) {
     try {
       const user = await this.userService.createUser(req.body);
-      res.status(201).json({ message: "Usuario creado exitosamente", user });
+      res.status(201).json(successResponse(user, "Usuario creado exitosamente"));
     } catch (error) {
       next(error);
     }
@@ -45,7 +47,7 @@ class UserController {
   async updateUser(req, res, next) {
     try {
       const user = await this.userService.updateUser(req.params.id, req.body);
-      res.json({ message: "Usuario actualizado exitosamente", user });
+      res.json(successResponse(user, "Usuario actualizado exitosamente"));
     } catch (error) {
       next(error);
     }
@@ -57,7 +59,7 @@ class UserController {
   async deleteUser(req, res, next) {
     try {
       const user = await this.userService.deleteUser(req.params.id, req.user.id);
-      res.json({ message: "Usuario desactivado exitosamente", user });
+      res.json(successResponse(user, "Usuario desactivado exitosamente"));
     } catch (error) {
       next(error);
     }

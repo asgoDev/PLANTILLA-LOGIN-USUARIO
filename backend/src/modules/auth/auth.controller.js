@@ -1,4 +1,5 @@
 import { setTokenCookies, clearTokenCookies } from '../../infrastructure/jwt/jwt.utils.js';
+import { successResponse } from '../../shared/dtos/response.dto.js';
 
 /**
  * El controlador ya no compara strings de error.
@@ -20,12 +21,14 @@ class AuthController {
             req.auditUserId = result.user.id;
             setTokenCookies(res, result.accessToken, result.refreshToken);
 
-            res.json({
-                message: 'Inicio de sesión exitoso',
-                user: result.user,
-                accessToken: result.accessToken,
-                sessionExpiry: result.sessionExpiry,
-            });
+            res.json(successResponse(
+                {
+                    user: result.user,
+                    accessToken: result.accessToken,
+                    sessionExpiry: result.sessionExpiry,
+                },
+                'Inicio de sesión exitoso'
+            ));
         } catch (error) {
             if (error.userId) req.auditUserId = error.userId;
             next(error); // AppError llega al errorHandler con su statusCode
@@ -42,11 +45,13 @@ class AuthController {
 
             setTokenCookies(res, result.accessToken, result.refreshToken);
 
-            res.json({
-                message: 'Token renovado exitosamente',
-                accessToken: result.accessToken,
-                sessionExpiry: result.sessionExpiry,
-            });
+            res.json(successResponse(
+                {
+                    accessToken: result.accessToken,
+                    sessionExpiry: result.sessionExpiry,
+                },
+                'Token renovado exitosamente'
+            ));
         } catch (error) {
             clearTokenCookies(res);
             next(error);
@@ -65,7 +70,7 @@ class AuthController {
             console.error('Error al invalidar refresh token:', error);
         } finally {
             clearTokenCookies(res);
-            res.json({ message: 'Sesión cerrada exitosamente' });
+            res.json(successResponse(null, 'Sesión cerrada exitosamente'));
         }
     }
 
@@ -75,7 +80,7 @@ class AuthController {
     async getMe(req, res, next) {
         try {
             const user = await this.authService.getMe(req.user.id);
-            res.json(user);
+            res.json(successResponse(user));
         } catch (error) {
             next(error);
         }

@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { toAuditoriaListDTO } from '../../shared/dtos/auditoria.dto.js';
 
 class AuditoriaService {
   constructor({ auditoriaRepository }) {
@@ -105,7 +106,7 @@ class AuditoriaService {
     ]);
 
     return {
-      logs,
+      logs: toAuditoriaListDTO(logs),
       pagination: {
         total,
         page:  Number(page),

@@ -1,4 +1,5 @@
 import AppError from "../../shared/errors/AppError.js";
+import { toUserDTO, toUserListDTO } from "../../shared/dtos/user.dto.js";
 
 class UserService {
   constructor({ userRepository }) {
@@ -26,7 +27,7 @@ class UserService {
     ]);
 
     return {
-      users,
+      users: toUserListDTO(users),
       pagination: {
         total,
         page: Number(page),
@@ -43,7 +44,7 @@ class UserService {
     const user = await this.userRepo.findById(id);
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
-    return user;
+    return toUserDTO(user);
   }
 
   /**
@@ -51,7 +52,8 @@ class UserService {
    * req.body ya viene validado por validate(createUserSchema) en la ruta.
    */
   async createUser(data) {
-    return this.userRepo.create(data);
+    const user = await this.userRepo.create(data);
+    return toUserDTO(user);
   }
 
   /**
@@ -66,7 +68,7 @@ class UserService {
 
     Object.assign(user, data);
     await this.userRepo.save(user);
-    return user;
+    return toUserDTO(user);
   }
 
   /**
@@ -90,7 +92,7 @@ class UserService {
 
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
-    return user;
+    return toUserDTO(user);
   }
 }
 

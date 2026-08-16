@@ -1,3 +1,6 @@
+import { successResponse } from '../../shared/dtos/response.dto.js';
+import { toDashboardStatsDTO } from '../../shared/dtos/dashboard.dto.js';
+
 class DashboardController {
     constructor({ dashboardService }) {
         this.dashboardService = dashboardService;
@@ -9,7 +12,7 @@ class DashboardController {
     async getStats(req, res, next) {
         try {
             const stats = await this.dashboardService.getStats();
-            res.json(stats);
+            res.json(successResponse(toDashboardStatsDTO(stats)));
         } catch (error) {
             next(error);
         }

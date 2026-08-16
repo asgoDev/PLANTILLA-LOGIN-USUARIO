@@ -1,3 +1,5 @@
+import { successResponse, paginatedResponse } from '../../shared/dtos/response.dto.js';
+
 class AuditoriaController {
     constructor({ auditoriaService }) {
         this.auditoriaService = auditoriaService;
@@ -34,7 +36,7 @@ class AuditoriaController {
                 hasta,
             });
 
-            res.json(data);
+            res.json(paginatedResponse(data.logs, data.pagination));
         } catch (error) {
             next(error);
         }
@@ -42,7 +44,7 @@ class AuditoriaController {
     async getModules(req, res, next) {
         try {
             const modules = await this.auditoriaService.getModules();
-            res.json({ modules });
+            res.json(successResponse(modules));
         } catch (error) {
             next(error);
         }
