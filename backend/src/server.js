@@ -13,12 +13,8 @@ import { auditMiddleware } from './container.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 
 // ── Rutas ──
-import {
-    authRoutes,
-    userRoutes,
-    dashboardRoutes,
-    auditoriaRoutes,
-} from './container.js';
+import { authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes } from './container.js';
+import createApiRouter from './routes/index.js';
 
 // ── Configuración ──
 const app = express();
@@ -56,17 +52,7 @@ app.use(auditMiddleware);
 //  RUTAS
 // ══════════════════════════════════════════════════
 
-app.get('/api/health', (_req, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-    });
-});
-
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/auditoria', auditoriaRoutes);
+app.use('/api', createApiRouter({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes }));
 
 // ── Ruta no encontrada ──
 app.use((_req, res) => {
