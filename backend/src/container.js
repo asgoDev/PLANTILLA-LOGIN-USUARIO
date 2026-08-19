@@ -3,6 +3,9 @@ import UserRepository from './modules/users/user.repository.js';
 import TokenBlacklistRepository from './modules/auth/auth.repository.js';
 import AuditoriaRepository from './modules/auditoria/auditoria.repository.js';
 
+// ── Infraestructura Redis ──
+import CacheService from './infrastructure/redis/cache.service.js';
+
 // ── Services ──
 import AuthService from './modules/auth/auth.service.js';
 import UserService from './modules/users/user.service.js';
@@ -28,16 +31,19 @@ import createAuditMiddleware from './shared/middleware/audit.middleware.js';
 //  COMPOSICIÓN
 // ═══════════════════════════════════════════
 
+// 0. Cache (infraestructura transversal)
+const cacheService = new CacheService();
+
 // 1. Repositorios
 const userRepository = new UserRepository();
-const tokenBlacklistRepository = new TokenBlacklistRepository();
+const tokenBlacklistRepository = new TokenBlacklistRepository({ cacheService });
 const auditoriaRepository = new AuditoriaRepository();
 
-// 2. Services (reciben repos)
-const authService = new AuthService({ userRepository, tokenBlacklistRepository });
-const userService = new UserService({ userRepository });
-const auditoriaService = new AuditoriaService({ auditoriaRepository });
+// 2. Services (reciben repos + cache opcional)
+const authService = new AuthService({ userRepository, tokenBlacklistRepository, cacheService });
 const dashboardService = new DashboardService({ userRepository, auditoriaRepository });
+const auditoriaService = new AuditoriaService({ auditoriaRepository });
+const userService = new UserService({ userRepository, authService });
 
 // 3. Controllers (reciben services)
 const authController = new AuthController({ authService });
@@ -65,4 +71,6 @@ export {
   userService,
   auditoriaService,
   dashboardService,
+  cacheService,
 };
+

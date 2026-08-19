@@ -1,4 +1,21 @@
 import rateLimit from 'express-rate-limit';
+import { RedisStore } from 'rate-limit-redis';
+import { getRedisClient } from '../../infrastructure/redis/redis.client.js';
+
+/**
+ * Crea el store para el rate limiter.
+ * Usa Redis si está disponible; fallback a memoria si no.
+ */
+const createStore = (prefix) => {
+    const client = getRedisClient();
+    if (client) {
+        return new RedisStore({
+            sendCommand: (...args) => client.call(...args),
+            prefix: `rl:${prefix}:`,
+        });
+    }
+    return undefined; // express-rate-limit usa memoria por defecto
+};
 
 /**
  * Limitador general para todas las peticiones de la API.
@@ -12,6 +29,7 @@ export const apiLimiter = rateLimit({
     },
     standardHeaders: true, // Devuelve información del límite en las cabeceras `RateLimit-*`
     legacyHeaders: false, // Deshabilita las cabeceras `X-RateLimit-*` antiguas
+    store: createStore('api'),
 });
 
 /**
@@ -26,4 +44,6 @@ export const authLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    store: createStore('auth'),
 });
+

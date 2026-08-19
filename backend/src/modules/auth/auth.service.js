@@ -8,9 +8,15 @@ import {
 import { toSessionUserDTO } from '../../shared/dtos/user.dto.js';
 
 class AuthService {
-    constructor({ userRepository, tokenBlacklistRepository }) {
+    constructor({ userRepository, tokenBlacklistRepository, cacheService }) {
         this.userRepo = userRepository;
         this.tokenBlacklistRepo = tokenBlacklistRepository;
+        this.cache = cacheService ?? null;
+    }
+
+    /** Clave de cache para el perfil de sesión de un usuario. */
+    #userSessionKey(userId) {
+        return `user:session:${userId}`;
     }
 
     /**
@@ -75,6 +81,7 @@ class AuthService {
 
         const { createHash } = await import('crypto');
         const hash = createHash('sha256').update(token).digest('hex');
+        // exists() comprueba Redis primero, luego MongoDB como fallback
         const isBlacklisted = await this.tokenBlacklistRepo.exists({ tokenHash: hash });
         
         if (isBlacklisted) {
@@ -110,11 +117,36 @@ class AuthService {
      * Solo proyecta campos públicos para no exponer datos internos.
      */
     async getMe(userId) {
+        const cacheKey = this.#userSessionKey(userId);
+        const TTL = parseInt(process.env.CACHE_USER_SESSION_TTL ?? '300', 10);
+
+        // 1. Cache hit — evitar la consulta a MongoDB
+        if (this.cache) {
+            const cached = await this.cache.get(cacheKey);
+            if (cached) return cached;
+        }
+
+        // 2. Cache miss — consultar MongoDB y guardar en cache
         const user = await this.userRepo.findById(userId);
         if (!user) {
             throw new AppError('Usuario no encontrado.', 404, 'USER_NOT_FOUND');
         }
-        return toSessionUserDTO(user);
+
+        const dto = toSessionUserDTO(user);
+        if (this.cache) await this.cache.set(cacheKey, dto, TTL);
+
+        return dto;
+    }
+
+    /**
+     * Invalida el cache de sesión de un usuario.
+     * Llamar después de actualizar o desactivar un usuario.
+     * @param {string} userId
+     */
+    async invalidateUserSessionCache(userId) {
+        if (this.cache) {
+            await this.cache.del(this.#userSessionKey(userId));
+        }
     }
 
     /**
@@ -124,13 +156,13 @@ class AuthService {
     async invalidateRefreshToken(token) {
         const { createHash } = await import('crypto');
         const hash = createHash('sha256').update(token).digest('hex');
-        try {
-            await this.tokenBlacklistRepo.create({ tokenHash: hash });
-        } catch (error) {
-            if (error.code !== 11000) {
-                throw error;
-            }
-        }
+
+        // Calcular el TTL restante del refresh token para sincronizar la expiración en Redis
+        const refreshExpiresMs = getRefreshExpiresMs();
+        const ttlSeconds = Math.ceil(refreshExpiresMs / 1000);
+
+        // El repositorio escribe en Redis (con TTL) y en MongoDB de forma concurrente
+        await this.tokenBlacklistRepo.create({ tokenHash: hash, ttlSeconds });
     }
 }
 

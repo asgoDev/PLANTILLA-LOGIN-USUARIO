@@ -2,8 +2,9 @@ import AppError from "../../shared/errors/AppError.js";
 import { toUserDTO, toUserListDTO } from "../../shared/dtos/user.dto.js";
 
 class UserService {
-  constructor({ userRepository }) {
+  constructor({ userRepository, authService }) {
     this.userRepo = userRepository;
+    this.authService = authService ?? null;
   }
 
   /**
@@ -68,6 +69,10 @@ class UserService {
 
     Object.assign(user, data);
     await this.userRepo.save(user);
+
+    // Invalidar el cache de sesión del usuario actualizado
+    await this.authService?.invalidateUserSessionCache(id);
+
     return toUserDTO(user);
   }
 
@@ -92,6 +97,10 @@ class UserService {
 
     if (!user)
       throw new AppError("Usuario no encontrado.", 404, "USER_NOT_FOUND");
+
+    // Invalidar cache de sesión del usuario desactivado
+    await this.authService?.invalidateUserSessionCache(id);
+
     return toUserDTO(user);
   }
 }

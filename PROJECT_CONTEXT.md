@@ -22,7 +22,8 @@ Es una **plantilla base Full-Stack** para sistemas web con:
 |---|---|
 | **Backend** | Node.js (ES Modules), Express 4, Mongoose 8 (MongoDB), Zod (validación), Bcrypt, Jwt |
 | **Frontend** | React 18, Vite, Tailwind CSS, Zustand (estado global), React Router v6 |
-| **Seguridad** | Helmet, Express Rate Limit, Mongo Sanitization, Cors, Token Blacklist |
+| **Seguridad** | Helmet, Express Rate Limit (+ Redis Store), Mongo Sanitization, Cors, Token Blacklist |
+| **Cache** | Redis (ioredis) — opcional con graceful degradation. Token blacklist, dashboard stats, sesión de usuario |
 | **Paquetes / Monorepo** | PNPM Workspaces |
 
 ---
@@ -40,7 +41,10 @@ backend/
 │   │
 │   ├── infrastructure/           # Adaptadores externos
 │   │   ├── database/db.js        # Conexión MongoDB (Mongoose)
-│   │   └── jwt/jwt.utils.js      # Firma y verificación de Access/Refresh Tokens
+│   │   ├── jwt/jwt.utils.js      # Firma y verificación de Access/Refresh Tokens
+│   │   └── redis/
+│   │       ├── redis.client.js   # Conexión Redis (ioredis) con graceful degradation
+│   │       └── cache.service.js  # Servicio genérico de cache (get/set/del/exists)
 │   │
 │   ├── modules/                  # Módulos de dominio
 │   │   ├── auth/                 # Login, refresh, logout, me (controller, service, repository, validation)

@@ -11,7 +11,7 @@ class DashboardController {
      */
     async getStats(req, res, next) {
         try {
-            const stats = await this.dashboardService.getStats();
+            const stats = await this.dashboardService.getStats(req.user);
             res.json(successResponse(toDashboardStatsDTO(stats)));
         } catch (error) {
             next(error);

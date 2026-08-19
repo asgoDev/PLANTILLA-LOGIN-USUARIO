@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import connectDB from './infrastructure/database/db.js';
+import { connectRedis, disconnectRedis } from './infrastructure/redis/redis.client.js';
 
 // ── Middleware ──
 import helmet from 'helmet';
@@ -81,6 +82,7 @@ app.use(errorHandler);
 
 const startServer = async () => {
     await connectDB();
+    await connectRedis(); // Redis es opcional — si falla, el sistema sigue funcionando
     app.listen(PORT, () => {
         console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
         console.log(`📍 Entorno: ${process.env.NODE_ENV || 'development'}`);
@@ -88,3 +90,17 @@ const startServer = async () => {
 };
 
 startServer();
+
+// ══════════════════════════════════════════════════
+//  GRACEFUL SHUTDOWN
+// ══════════════════════════════════════════════════
+
+const shutdown = async (signal) => {
+    console.log(`\n🛑 [${signal}] Cerrando servidor...`);
+    await disconnectRedis();
+    process.exit(0);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+

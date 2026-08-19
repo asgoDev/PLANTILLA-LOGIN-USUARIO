@@ -5,7 +5,7 @@ const createDashboardRoutes = (dashboardController) => {
   const router = Router();
 
   router.use(authenticate);
-  router.use(authorize('admin'));
+  // Cualquier usuario autenticado puede acceder a su dashboard personalizado
   router.get('/stats', (req, res, next) => dashboardController.getStats(req, res, next));
 
   return router;

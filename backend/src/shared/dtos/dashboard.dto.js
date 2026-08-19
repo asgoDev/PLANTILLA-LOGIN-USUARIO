@@ -16,10 +16,21 @@
  * @returns {object}
  */
 export function toDashboardStatsDTO(stats) {
+  if (stats.role === 'admin' || stats.usersCount !== undefined) {
+    const usersCount = stats.usersCount ?? 0;
+    const activeUsersCount = stats.activeUsersCount ?? 0;
+    return {
+      role: stats.role || 'admin',
+      usersCount,
+      activeUsersCount,
+      inactiveUsersCount: usersCount - activeUsersCount,
+      auditCount: stats.auditCount ?? 0,
+    };
+  }
+
   return {
-    usersCount:       stats.usersCount,
-    activeUsersCount: stats.activeUsersCount,
-    inactiveUsersCount: stats.usersCount - stats.activeUsersCount,
-    auditCount:       stats.auditCount,
+    role: stats.role || 'user',
+    userId: stats.userId,
+    metrics: stats.metrics || {},
   };
 }
