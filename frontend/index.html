@@ -3,14 +3,49 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="" />
-  <!-- Google Fonts: Montserrat se carga dinámicamente desde site.config.js -->
-  <!-- Material Symbols permanece estático (no es configurable) -->
+
+  <!-- ─── Identidad ──────────────────────────────────────────────── -->
+  <title>Mi Plantilla | Panel de Control</title>
+  <meta name="description" content="Plantilla de Login y Control de Usuarios" />
+
+  <!-- Panel privado: no indexar -->
+  <meta name="robots" content="noindex, nofollow" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+
+  <!-- Theme-color (barra de navegación en móviles) -->
+  <meta name="theme-color" content="#006a3b" />
+
+  <!-- ─── Tipografía ─────────────────────────────────────────────── -->
+  <!-- Montserrat (fuente principal del sitio) -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" />
+  <!-- Material Symbols (iconos, no configurable) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
-  <title>App</title>
+
+  <!-- ─── Tema sin flash (FOUC fix) ──────────────────────────────── -->
+  <!--
+    Script bloqueante: aplica el tema del localStorage ANTES de que el
+    browser pinte el primer frame. Evita el flash de tema incorrecto.
+    Patrón estándar usado por Next.js, Remix y similares.
+  -->
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem('ui-storage');
+        if (!stored) return;
+        const theme = stored && JSON.parse(stored).state && JSON.parse(stored).state.theme
+          ? JSON.parse(stored).state.theme
+          : 'default';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (error) {
+        console.log("Error al aplicar el tema:", error);
+        document.documentElement.setAttribute('data-theme', 'default');
+      }
+    })();
+  </script>
 </head>
 
 <body class="bg-background text-on-surface font-body-md antialiased">
