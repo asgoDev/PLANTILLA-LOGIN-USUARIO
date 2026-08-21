@@ -86,6 +86,11 @@ const userSchema = new mongoose.Schema(
       maxlength: [200, "La dirección no puede superar 200 caracteres"],
       default: null,
     },
+    fotoPerfil: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -10,13 +10,14 @@ import { Router } from 'express';
  *   /api/v1/dashboard/...
  *   /api/v1/auditoria/...
  */
-const createV1Routes = ({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes }) => {
+const createV1Routes = ({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes, profileRoutes }) => {
     const router = Router();
 
     router.use('/auth',      authRoutes);
     router.use('/users',     userRoutes);
     router.use('/dashboard', dashboardRoutes);
     router.use('/auditoria', auditoriaRoutes);
+    if (profileRoutes) router.use('/profile', profileRoutes);
 
     return router;
 };

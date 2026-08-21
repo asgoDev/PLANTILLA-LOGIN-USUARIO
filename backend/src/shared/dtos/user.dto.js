@@ -27,6 +27,7 @@ export function toUserDTO(user) {
     estado:          user.estado,
     telefono:        user.telefono ?? null,
     direccion:       user.direccion ?? null,
+    fotoPerfil:      user.fotoPerfil ?? null,
     createdAt:       user.createdAt,
     updatedAt:       user.updatedAt,
   };
@@ -42,11 +43,12 @@ export function toUserDTO(user) {
  */
 export function toSessionUserDTO(user) {
   return {
-    id:       String(user._id ?? user.id),
-    nombre:   user.nombre,
-    apellido: user.apellido,
-    email:    user.email,
-    role:     user.role,
+    id:         String(user._id ?? user.id),
+    nombre:     user.nombre,
+    apellido:   user.apellido,
+    email:      user.email,
+    role:       user.role,
+    fotoPerfil: user.fotoPerfil ?? null,
   };
 }
 

@@ -13,7 +13,7 @@ import { auditMiddleware } from './container.js';
 import errorHandler from './shared/middleware/errorHandler.js';
 
 // ── Rutas ──
-import { authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes } from './container.js';
+import { authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes, profileRoutes } from './container.js';
 import createApiRouter from './routes/index.js';
 
 // ── Configuración ──
@@ -52,7 +52,7 @@ app.use(auditMiddleware);
 //  RUTAS
 // ══════════════════════════════════════════════════
 
-app.use('/api', createApiRouter({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes }));
+app.use('/api', createApiRouter({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes, profileRoutes }));
 
 // ── Ruta no encontrada ──
 app.use((_req, res) => {

@@ -15,7 +15,7 @@ import createV1Routes from './v1/index.js';
  * El frontend puede usar las rutas sin versión (/api/auth/login).
  * Para cambiar la versión activa, solo se modifica el alias aquí.
  */
-const createApiRouter = ({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes }) => {
+const createApiRouter = ({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes, profileRoutes }) => {
     const router = Router();
 
     // ── Health check (operacional, fuera del contrato versionado) ──
@@ -27,7 +27,7 @@ const createApiRouter = ({ authRoutes, userRoutes, dashboardRoutes, auditoriaRou
     });
 
     // ── Versiones explícitas ──
-    const v1Router = createV1Routes({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes });
+    const v1Router = createV1Routes({ authRoutes, userRoutes, dashboardRoutes, auditoriaRoutes, profileRoutes });
     router.use('/v1', v1Router);
 
     // ── Alias "latest" (misma instancia, cero overhead) ──

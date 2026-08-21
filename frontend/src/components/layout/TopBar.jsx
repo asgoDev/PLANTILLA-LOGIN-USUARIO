@@ -76,7 +76,7 @@ export default function TopBar({ onMenuToggle }) {
                 : 'ring-transparent group-hover:ring-primary/40 ring-offset-surface'
               }`}
           >
-            <Avatar name={fullName} size="md" />
+            <Avatar src={user?.fotoPerfil} name={fullName} size="md" />
           </span>
         </button>
 
