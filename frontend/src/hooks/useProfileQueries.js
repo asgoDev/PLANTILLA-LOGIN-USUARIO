@@ -55,3 +55,15 @@ export function useUpdateProfilePhoto() {
     },
   });
 }
+
+/**
+ * Hook para cambiar la contraseña del usuario autenticado.
+ * No invalida queries — la sesión se cierra desde el componente
+ * tras un countdown de 5 segundos para no interrumpir abruptamente.
+ */
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (data) => profileService.changePassword(data).then((res) => res.data),
+  });
+}
+

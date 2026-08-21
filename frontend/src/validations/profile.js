@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 const telefonoRegex = /^(0(4(12|14|16|22|24|26)|2\d{2}))-\d{7}$/;
 
+// ── Campo de contraseña fuerte (reutilizable) ─────────────────────────────────
+const strongPassword = z
+  .string()
+  .min(8, 'La contraseña debe tener al menos 8 caracteres')
+  .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+  .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+  .regex(/[0-9]/, 'Debe contener al menos un número');
+
 export const updateProfileSchema = z.object({
   nombre: z
     .string({ required_error: 'El nombre es requerido' })
@@ -41,3 +49,35 @@ export const updateProfileSchema = z.object({
     .nullable()
     .transform((val) => (val === '' ? undefined : val)),
 });
+
+/**
+ * changePasswordSchema
+ *
+ * Valida el formulario de cambio de contraseña del propio usuario.
+ * - currentPassword: mínimo 8 chars (igual al requisito del modelo)
+ * - newPassword: política de fortaleza completa
+ * - confirmPassword: debe coincidir con newPassword
+ *
+ * Refines:
+ *  1. newPassword !== currentPassword
+ *  2. confirmPassword === newPassword
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string({ required_error: 'La contraseña actual es requerida' })
+      .min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    newPassword: strongPassword,
+    confirmPassword: z
+      .string({ required_error: 'Confirme su nueva contraseña' })
+      .min(1, 'Confirme su nueva contraseña'),
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    message: 'La nueva contraseña debe ser diferente a la actual',
+    path: ['newPassword'],
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+  });
+

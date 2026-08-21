@@ -47,3 +47,19 @@ export const authLimiter = rateLimit({
     store: createStore('auth'),
 });
 
+/**
+ * Limitador estricto para el cambio de contraseña.
+ * Permite máximo 5 intentos cada 15 minutos por IP.
+ * Previene ataques de fuerza bruta sobre la contraseña actual del usuario.
+ */
+export const passwordChangeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 5,
+    message: {
+        message: 'Demasiados intentos de cambio de contraseña. Por favor intente de nuevo en 15 minutos.',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: createStore('pwd-change'),
+});
+

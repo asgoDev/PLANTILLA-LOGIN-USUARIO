@@ -15,4 +15,10 @@ export const profileService = {
    * Actualiza exclusivamente la URL de la foto de perfil.
    */
   updatePhoto: (fotoPerfil) => api.put('/profile/photo', { fotoPerfil }),
+
+  /**
+   * Cambia la contraseña del usuario autenticado.
+   * Requiere currentPassword, newPassword y confirmPassword.
+   */
+  changePassword: (data) => api.put('/profile/password', data),
 };

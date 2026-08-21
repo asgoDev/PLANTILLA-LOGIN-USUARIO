@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useProfile, useUpdateProfile, useUpdateProfilePhoto } from '../../hooks/useProfileQueries';
-import { updateProfileSchema } from '../../validations/profile';
+import { useProfile, useUpdateProfile, useUpdateProfilePhoto, useChangePassword } from '../../hooks/useProfileQueries';
+import { updateProfileSchema, changePasswordSchema } from '../../validations/profile';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { useAuthStore } from '../../stores/authStore';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import Icon from '../../components/ui/Icon';
@@ -14,13 +15,20 @@ import toast from 'react-hot-toast';
 export default function ProfilePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const logout = useAuthStore((s) => s.logout);
 
   const { data: profile, isLoading: isProfileLoading, error: profileError } = useProfile();
   const updateProfileMutation = useUpdateProfile();
   const updatePhotoMutation = useUpdateProfilePhoto();
+  const changePasswordMutation = useChangePassword();
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
+
+  // ── Estado modal de countdown post-cambio de contraseña ─────────────────────
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef(null);
 
   const isSaving = updateProfileMutation.isPending;
 
@@ -39,6 +47,20 @@ export default function ProfilePage() {
       direccion: '',
     },
   });
+
+  // ── Formulario de cambio de contraseña (independiente del formulario de perfil) ───
+  const {
+    register: registerPwd,
+    handleSubmit: handleSubmitPwd,
+    reset: resetPwd,
+    watch: watchPwd,
+    formState: { errors: pwdErrors, isSubmitting: isPwdSubmitting },
+  } = useForm({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
+  });
+
+  const newPasswordValue = watchPwd('newPassword', '');
 
   // Cargar datos del perfil en el formulario al recibir la respuesta
   useEffect(() => {
@@ -60,6 +82,31 @@ export default function ProfilePage() {
       toast.error('Error al cargar la información del perfil.');
     }
   }, [profileError]);
+
+  // ── Countdown de logout tras cambio de contraseña ──────────────────────────────
+  const triggerLogoutCountdown = useCallback(() => {
+    setShowLogoutModal(true);
+    setCountdown(5);
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          logout().then(() => navigate('/login'));
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [logout, navigate]);
+
+  // Limpiar el interval al desmontar
+  useEffect(() => () => clearInterval(countdownRef.current), []);
+
+  // Función para cerrar sesión inmediatamente desde el modal
+  const handleImmediateLogout = () => {
+    clearInterval(countdownRef.current);
+    logout().then(() => navigate('/login'));
+  };
 
   // Manejo de autoformato de teléfono venezolano
   const handleTelefonoChange = (e) => {
@@ -140,6 +187,34 @@ export default function ProfilePage() {
       toast.success('Perfil actualizado correctamente.');
     } catch (err) {
       const serverMessage = err.response?.data?.message || 'Error al actualizar el perfil';
+      toast.error(serverMessage);
+    }
+  };
+
+  // ── Fortaleza de la contraseña ─────────────────────────────────────────────────
+  const getPasswordStrength = (pwd) => {
+    if (!pwd) return { level: 0, label: '', color: '' };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) score++;
+    if (score <= 2) return { level: 1, label: 'Débil', color: 'bg-red-500' };
+    if (score === 3) return { level: 2, label: 'Media', color: 'bg-amber-500' };
+    if (score === 4) return { level: 3, label: 'Fuerte', color: 'bg-emerald-500' };
+    return { level: 4, label: 'Muy fuerte', color: 'bg-emerald-600' };
+  };
+  const pwdStrength = getPasswordStrength(newPasswordValue);
+
+  // ── Submit del formulario de cambio de contraseña ─────────────────────────────
+  const onSubmitPassword = async (data) => {
+    try {
+      await changePasswordMutation.mutateAsync(data);
+      resetPwd();
+      triggerLogoutCountdown();
+    } catch (err) {
+      const serverMessage = err.response?.data?.message || 'Error al cambiar la contraseña';
       toast.error(serverMessage);
     }
   };
@@ -551,6 +626,166 @@ export default function ProfilePage() {
           </div>
         </div>
       </form>
-    </div >
+
+      {/* ── Formulario de Cambio de Contraseña ── */}
+      <form
+        onSubmit={handleSubmitPwd(onSubmitPassword)}
+        className="space-y-0 shadow-sm rounded-2xl overflow-hidden bg-surface-container-lowest border border-outline-variant/20"
+      >
+        <div className="px-lg py-md border-b border-outline-variant/15 flex items-center justify-between">
+          <div className="flex items-center gap-sm">
+            <Icon name="lock_reset" size="20px" className="text-primary" />
+            <span className="text-label-lg font-semibold text-on-surface-variant uppercase tracking-wide">
+              Seguridad y Contraseña
+            </span>
+          </div>
+          <span className="text-label-sm text-on-surface-variant">
+            Se cerrará la sesión tras el cambio exitoso
+          </span>
+        </div>
+
+        <div className="p-lg space-y-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+            {/* Contraseña Actual */}
+            <Input
+              label="Contraseña Actual *"
+              type="password"
+              icon="key"
+              placeholder="Ingrese su contraseña actual"
+              error={pwdErrors.currentPassword?.message}
+              {...registerPwd('currentPassword')}
+            />
+
+            {/* Nueva Contraseña */}
+            <div className="space-y-2">
+              <Input
+                label="Nueva Contraseña *"
+                type="password"
+                icon="lock"
+                placeholder="Mínimo 8 caracteres"
+                error={pwdErrors.newPassword?.message}
+                {...registerPwd('newPassword')}
+              />
+
+              {/* Indicador de Fortaleza */}
+              {newPasswordValue && (
+                <div className="space-y-1 animate-fade-in pt-1">
+                  <div className="flex items-center justify-between text-label-xs text-on-surface-variant">
+                    <span>
+                      Fortaleza: <strong className="font-semibold text-on-surface">{pwdStrength.label}</strong>
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full bg-surface-container-low rounded-full overflow-hidden flex gap-1">
+                    <div className={`h-full flex-1 rounded-full transition-all duration-300 ${pwdStrength.level >= 1 ? pwdStrength.color : 'bg-transparent'}`} />
+                    <div className={`h-full flex-1 rounded-full transition-all duration-300 ${pwdStrength.level >= 2 ? pwdStrength.color : 'bg-transparent'}`} />
+                    <div className={`h-full flex-1 rounded-full transition-all duration-300 ${pwdStrength.level >= 3 ? pwdStrength.color : 'bg-transparent'}`} />
+                    <div className={`h-full flex-1 rounded-full transition-all duration-300 ${pwdStrength.level >= 4 ? pwdStrength.color : 'bg-transparent'}`} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirmar Nueva Contraseña */}
+            <Input
+              label="Confirmar Nueva Contraseña *"
+              type="password"
+              icon="check_circle"
+              placeholder="Repita la nueva contraseña"
+              error={pwdErrors.confirmPassword?.message}
+              {...registerPwd('confirmPassword')}
+            />
+          </div>
+
+          <div className="p-md rounded-xl bg-surface-container-low/70 border border-outline-variant/15 flex items-start gap-sm">
+            <Icon name="info" size="18px" className="text-primary mt-0.5 shrink-0" />
+            <p className="text-label-sm text-on-surface-variant">
+              La contraseña debe tener al menos <strong>8 caracteres</strong> e incluir al menos una letra <strong>mayúscula</strong>, una <strong>minúscula</strong> y un <strong>número</strong>. No puede ser idéntica a su contraseña actual.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer de Acciones del Formulario de Contraseña */}
+        <div className="bg-surface-container-lowest border-t border-outline-variant/15 px-lg py-md flex flex-col sm:flex-row items-center justify-between gap-md">
+          <p className="text-body-sm text-on-surface-variant">
+            Asegúrese de recordar su nueva contraseña para el próximo inicio de sesión.
+          </p>
+
+          <div className="flex items-center gap-md w-full sm:w-auto justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="md"
+              onClick={() => resetPwd()}
+              disabled={changePasswordMutation.isPending}
+              className="active:scale-95 transition-all w-full sm:w-auto"
+            >
+              Limpiar
+            </Button>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={changePasswordMutation.isPending}
+              disabled={changePasswordMutation.isPending}
+              icon={<Icon name="lock_reset" size="18px" />}
+              className="active:scale-95 transition-all w-full sm:w-auto px-lg"
+            >
+              Actualizar Contraseña
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* ── Modal de Logout con Countdown de 5 Segundos ── */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div
+            className="w-full max-w-md bg-surface-container-lowest rounded-3xl p-xl shadow-2xl border border-outline-variant/30 text-center space-y-lg animate-scale-in font-montserrat"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Ícono de éxito con animación */}
+            <div className="w-20 h-20 mx-auto rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center ring-8 ring-emerald-500/5">
+              <Icon name="check_circle" size="44px" />
+            </div>
+
+            {/* Texto informativo */}
+            <div className="space-y-2">
+              <h3 className="text-headline-sm font-bold text-on-surface">
+                ¡Contraseña Actualizada!
+              </h3>
+              <p className="text-body-sm text-on-surface-variant">
+                Su contraseña se ha modificado exitosamente. Por razones de seguridad, debe volver a iniciar sesión con sus nuevas credenciales.
+              </p>
+            </div>
+
+            {/* Contador animado */}
+            <div className="py-3 px-4 rounded-2xl bg-surface-container-low border border-outline-variant/20 inline-flex items-center justify-center gap-3 w-full">
+              <span className="w-3 h-3 rounded-full bg-primary animate-ping" />
+              <p className="text-body-md font-medium text-on-surface">
+                Cerrando sesión en{' '}
+                <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg bg-primary text-on-primary font-bold text-title-sm">
+                  {countdown}
+                </span>{' '}
+                {countdown === 1 ? 'segundo' : 'segundos'}...
+              </p>
+            </div>
+
+            {/* Botón de acción inmediata */}
+            <Button
+              type="button"
+              variant="primary"
+              size="lg"
+              onClick={handleImmediateLogout}
+              icon={<Icon name="logout" size="20px" />}
+              className="w-full shadow-md active:scale-95 transition-all"
+            >
+              Cerrar Sesión Ahora
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
+

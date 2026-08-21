@@ -77,6 +77,44 @@ class ProfileService {
 
     return toUserDTO(user);
   }
+
+  /**
+   * Cambia la contraseña del usuario autenticado verificando la contraseña actual.
+   *
+   * SEGURIDAD:
+   *  - Requiere la contraseña actual para autorizar el cambio (previene abuso de sesiones robadas).
+   *  - Usa .save() para que el pre-save hook de Mongoose hashee la nueva contraseña con bcrypt.
+   *  - Invalida la cache de sesión del usuario al terminar.
+   *
+   * @param {string} userId          ID del usuario autenticado
+   * @param {string} currentPassword Contraseña actual en texto plano
+   * @param {string} newPassword     Nueva contraseña en texto plano (ya validada por Zod)
+   */
+  async changePassword(userId, { currentPassword, newPassword }) {
+    // 1. Obtener el usuario incluyendo el campo password (select: false en el modelo)
+    const user = await this.userRepo.findById(userId, '+password');
+    if (!user) {
+      throw new AppError('Usuario no encontrado.', 404, 'USER_NOT_FOUND');
+    }
+
+    // 2. Verificar la contraseña actual — timing-safe vía bcrypt.compare
+    const isMatch = await this.userRepo.comparePassword(user, currentPassword);
+    if (!isMatch) {
+      throw new AppError(
+        'La contraseña actual es incorrecta.',
+        401,
+        'INVALID_CURRENT_PASSWORD'
+      );
+    }
+
+    // 3. Asignar la nueva contraseña — el pre-save hook la hashea automáticamente
+    user.password = newPassword;
+    await this.userRepo.save(user);
+
+    // 4. Invalidar cache de sesión para forzar nueva autenticación
+    await this.authService?.invalidateUserSessionCache(userId);
+  }
+
 }
 
 export default ProfileService;

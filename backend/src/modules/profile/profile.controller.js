@@ -41,6 +41,21 @@ class ProfileController {
       next(error);
     }
   }
+
+  /**
+   * PUT /api/profile/password
+   * Cambia la contraseña del usuario autenticado.
+   * Requiere currentPassword para verificación antes de aplicar el cambio.
+   */
+  async changePassword(req, res, next) {
+    try {
+      await this.profileService.changePassword(req.user.id, req.body);
+      res.json(successResponse(null, 'Contraseña actualizada exitosamente'));
+    } catch (error) {
+      next(error);
+    }
+  }
+
 }
 
 export default ProfileController;

@@ -56,3 +56,40 @@ export const updatePhotoSchema = z.object({
     .nullable()
     .transform((val) => (val === '' ? null : val)),
 });
+
+/**
+ * changePasswordSchema
+ *
+ * Valida el cuerpo de la solicitud de cambio de contraseña del propio usuario.
+ * - currentPassword: mínimo 8 caracteres (mismo requisito que el schema del modelo)
+ * - newPassword: política de fortaleza completa (mayúscula, minúscula, número)
+ * - confirmPassword: debe coincidir exactamente con newPassword
+ *
+ * Reglas de negocio (refine):
+ *  1. newPassword debe ser diferente a currentPassword
+ *  2. confirmPassword debe ser igual a newPassword
+ */
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z
+      .string({ required_error: 'La contraseña actual es requerida' })
+      .min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    newPassword: z
+      .string({ required_error: 'La nueva contraseña es requerida' })
+      .min(8, 'La contraseña debe tener al menos 8 caracteres')
+      .regex(/[a-z]/, 'Debe contener al menos una letra minúscula')
+      .regex(/[A-Z]/, 'Debe contener al menos una letra mayúscula')
+      .regex(/[0-9]/, 'Debe contener al menos un número'),
+    confirmPassword: z
+      .string({ required_error: 'La confirmación de contraseña es requerida' })
+      .min(1, 'Confirme su nueva contraseña'),
+  })
+  .refine((data) => data.newPassword !== data.currentPassword, {
+    message: 'La nueva contraseña debe ser diferente a la contraseña actual',
+    path: ['newPassword'],
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Las contraseñas no coinciden',
+    path: ['confirmPassword'],
+  });
+
