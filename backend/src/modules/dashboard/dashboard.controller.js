@@ -1,5 +1,4 @@
 import { successResponse } from '../../shared/dtos/response.dto.js';
-import { toDashboardStatsDTO } from '../../shared/dtos/dashboard.dto.js';
 
 class DashboardController {
     constructor({ dashboardService }) {
@@ -11,8 +10,9 @@ class DashboardController {
      */
     async getStats(req, res, next) {
         try {
-            const stats = await this.dashboardService.getStats(req.user);
-            res.json(successResponse(toDashboardStatsDTO(stats)));
+            const { role, id: userId } = req.user;
+            const stats = await this.dashboardService.getStats(role, userId);
+            res.json(successResponse(stats));
         } catch (error) {
             next(error);
         }
@@ -20,3 +20,4 @@ class DashboardController {
 }
 
 export default DashboardController;
+

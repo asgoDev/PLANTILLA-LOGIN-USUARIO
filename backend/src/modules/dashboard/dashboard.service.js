@@ -1,43 +1,35 @@
+import AppError from '../../shared/errors/AppError.js';
+
 class DashboardService {
-    constructor({ userRepository, auditoriaRepository }) {
-        this.userRepo = userRepository;
-        this.auditoriaRepo = auditoriaRepository;
+    /**
+     * @param {object} dependencies
+     * @param {Record<string, { getStats: (userId: string) => Promise<any> }>} dependencies.providersByRole
+     */
+    constructor({ providersByRole }) {
+        this.providersByRole = providersByRole;
     }
 
     /**
-     * Estadísticas del dashboard según el usuario y su rol.
-     * Consulta directamente MongoDB de forma ultrarrápida (countDocuments).
+     * Obtiene las estadísticas del dashboard delegando al provider configurado para el rol.
      *
-     * @param {object} user - Usuario autenticado { id, role }
+     * @param {string} role - Rol del usuario autenticado
+     * @param {string} userId - ID del usuario autenticado
+     * @returns {Promise<any>}
      */
-    async getStats(user) {
-        if (user?.role === 'admin') {
-            // Métricas del sistema para administradores
-            const [usersCount, activeUsersCount, auditCount] = await Promise.all([
-                this.userRepo.countDocuments(),
-                this.userRepo.countDocuments({ estado: 'activo' }),
-                this.auditoriaRepo.countDocuments(),
-            ]);
-
-            return {
-                role: 'admin',
-                usersCount,
-                activeUsersCount,
-                auditCount,
-            };
+    async getStats(role, userId) {
+        const provider = this.providersByRole?.[role];
+        if (!provider) {
+            throw new AppError(
+                `Dashboard no configurado para rol: ${role}`,
+                404,
+                'DASHBOARD_ROLE_NOT_CONFIGURED'
+            );
         }
 
-        // Métricas personalizadas para usuarios normales / roles SaaS
-        // 💡 Extensible para el SaaS en el que se trabaje
-        return {
-            role: user?.role || 'user',
-            userId: user?.id,
-            metrics: {
-                status: 'activo',
-            },
-        };
+        return provider.getStats(userId);
     }
 }
 
 export default DashboardService;
+
 

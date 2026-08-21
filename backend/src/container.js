@@ -6,6 +6,9 @@ import AuditoriaRepository from './modules/auditoria/auditoria.repository.js';
 // ── Infraestructura Redis ──
 import CacheService from './infrastructure/redis/cache.service.js';
 
+// ── Providers ──
+import createDashboardProviders from './modules/dashboard/providers/index.js';
+
 // ── Services ──
 import AuthService from './modules/auth/auth.service.js';
 import UserService from './modules/users/user.service.js';
@@ -39,9 +42,12 @@ const userRepository = new UserRepository();
 const tokenBlacklistRepository = new TokenBlacklistRepository({ cacheService });
 const auditoriaRepository = new AuditoriaRepository();
 
-// 2. Services (reciben repos + cache opcional)
+// 2. Providers (estrategia por rol)
+const dashboardProviders = createDashboardProviders({ userRepository, auditoriaRepository });
+
+// 3. Services (reciben repos / providers + cache opcional)
 const authService = new AuthService({ userRepository, tokenBlacklistRepository, cacheService });
-const dashboardService = new DashboardService({ userRepository, auditoriaRepository });
+const dashboardService = new DashboardService({ providersByRole: dashboardProviders });
 const auditoriaService = new AuditoriaService({ auditoriaRepository });
 const userService = new UserService({ userRepository, authService });
 
